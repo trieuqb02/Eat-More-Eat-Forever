@@ -19,7 +19,7 @@ export class Room extends Component implements IBaseComponent {
     }
 
     protected start(): void {
-        this.node.getChildByPath("NumberRoom")!.getComponent(Label).string = this.id;
+        this.node.getChildByPath("Id")!.getComponent(Label).string = this.id;
         this.node.getChildByPath("State")!.getComponent(Label).string = this.state;
         this.node.getChildByPath("Quantity")!.getComponent(Label).string = `${this.quantityPresent}/${this.quantityPlayer}`;
         this.node.getChildByPath("Name")!.getComponent(Label).string= this.nameRoom;

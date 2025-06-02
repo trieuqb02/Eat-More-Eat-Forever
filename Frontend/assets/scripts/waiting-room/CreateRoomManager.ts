@@ -29,7 +29,7 @@ export class CreateRommManager extends Component {
   }
 
   private onMinus(): void {
-    if (this.quantity == this.defaultQuantity) return;
+    if (this.quantity <= this.defaultQuantity) return;
     this.quantity -= 1;
     this.changeQuantity();
   }

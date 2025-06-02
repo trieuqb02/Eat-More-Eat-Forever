@@ -1,29 +1,21 @@
-import { _decorator, Component, Node } from 'cc';
-import { Socket } from 'socket.io-client';
+import { _decorator, Component, Node } from "cc";
+import { Socket } from "socket.io-client";
 const { ccclass, property } = _decorator;
 
-@ccclass('SocketManager')
+@ccclass("SocketManager")
 export class SocketManager extends Component {
-    private socket: Socket;
+  private socket: Socket;
 
-    start() {
-        this.initSocket();
-    }
+  start() {
+    this.initSocket();
+  }
 
-    initSocket() {
-        this.socket = (window as any).io('http://localhost:3000');
-        console.log(this.socket)
+  initSocket() {
+    this.socket = (window as any).io("http://localhost:3000");
+    console.log(this.socket);
 
-        this.socket.on('connect', () => {
-            console.log('Connected:', this.socket.id);
-        });
-
-        this.socket.emit("chat", "world");
-
-        this.socket.on("chat", (val) => {
-            console.log(val)
-        });
-
-    }
+    this.socket.on("connect", () => {
+      console.log("Connected:", this.socket.id);
+    });
+  }
 }
-
