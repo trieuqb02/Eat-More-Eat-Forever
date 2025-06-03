@@ -1,4 +1,6 @@
 import { _decorator, Button, Component, EditBox, Label, Node } from "cc";
+import { SocketManager } from "../socket/SocketManager";
+import { EventName } from "../utils/EventName";
 const { ccclass, property } = _decorator;
 
 @ccclass("CreateRommManager")
@@ -8,6 +10,8 @@ export class CreateRommManager extends Component {
 
   @property(Label)
   private quantityLabel: Label = null;
+
+  private socketManager =  SocketManager.getInstance();
 
   @property
   private maxiumPlayer: number = 0;
@@ -40,7 +44,16 @@ export class CreateRommManager extends Component {
 
   private onComfirm(): void {
     if (!this.nameEditBox.string) return;
-    console.log(this.nameEditBox.string, this.quantity);
+    this.socketManager.emit(EventName.CREATE_ROOM, {
+      name: this.nameEditBox.string,
+      quantity: this.quantity,
+    });
+
+    this.socketManager.on(EventName.CREATED_ROOM, (val) => {
+      console.log(val)
+    });
+
+    this.node.active = false;
   }
 
   protected onDisable(): void {

@@ -1,4 +1,4 @@
-package com.enotion.Backend.dto;
+package com.enotion.Backend.payload;
 
 import com.enotion.Backend.entities.Room;
 import com.enotion.Backend.enums.RoomState;

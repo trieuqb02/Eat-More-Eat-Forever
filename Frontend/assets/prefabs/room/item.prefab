@@ -142,8 +142,8 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 130.0390625,
-      "height": 30.240000000000002
+      "width": 130.00697093644166,
+      "height": 30.240000000000006
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
@@ -181,7 +181,7 @@
     "_string": "Number Room",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
-    "_actualFontSize": 20,
+    "_actualFontSize": 22.555555555555557,
     "_fontSize": 20,
     "_fontFamily": "Arial",
     "_lineHeight": 24,
@@ -260,7 +260,7 @@
     },
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": -150,
+      "x": -100,
       "y": 0,
       "z": 0
     },
@@ -301,8 +301,8 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 105.60546875,
-      "height": 30.240000000000002
+      "width": 105.57939801897321,
+      "height": 30.240000000000006
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
@@ -340,7 +340,7 @@
     "_string": "State Room",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
-    "_actualFontSize": 20,
+    "_actualFontSize": 22.555555555555557,
     "_fontSize": 20,
     "_fontFamily": "Arial",
     "_lineHeight": 24,
@@ -460,8 +460,8 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 136.728515625,
-      "height": 30.240000000000002
+      "width": 136.69476288292796,
+      "height": 30.240000000000006
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
@@ -499,7 +499,7 @@
     "_string": "Quantity Player",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
-    "_actualFontSize": 20,
+    "_actualFontSize": 22.555555555555557,
     "_fontSize": 20,
     "_fontFamily": "Arial",
     "_lineHeight": 24,
@@ -619,8 +619,8 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 112.255859375,
-      "height": 30.240000000000002
+      "width": 112.22815602870998,
+      "height": 30.240000000000006
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
@@ -658,7 +658,7 @@
     "_string": "Name Room",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
-    "_actualFontSize": 20,
+    "_actualFontSize": 22.555555555555557,
     "_fontSize": 20,
     "_fontFamily": "Arial",
     "_lineHeight": 24,
@@ -728,7 +728,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 870,
+      "width": 888,
       "height": 40
     },
     "_anchorPoint": {
@@ -804,10 +804,12 @@
   },
   {
     "__type__": "cc.ClickEvent",
-    "target": null,
+    "target": {
+      "__id__": 1
+    },
     "component": "",
-    "_componentId": "",
-    "handler": "",
+    "_componentId": "57788MXVYNDJ7Br8JzCmaof",
+    "handler": "onClick",
     "customEventData": ""
   },
   {
@@ -862,8 +864,8 @@
       "x": 0,
       "y": 0
     },
-    "_fillStart": 0,
-    "_fillRange": 0,
+    "_fillStart": 0.2,
+    "_fillRange": 0.1,
     "_isTrimmedMode": true,
     "_useGrayscale": false,
     "_atlas": null,

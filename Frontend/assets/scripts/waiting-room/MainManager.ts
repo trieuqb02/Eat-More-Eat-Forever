@@ -5,7 +5,7 @@ const { ccclass, property } = _decorator;
 @ccclass('MainManager')
 export class MainManager extends Component {
     @property(UI)
-    UI: UI = null;
+    ui: UI = null;
 
     start() {
 
@@ -16,7 +16,7 @@ export class MainManager extends Component {
     }
 
     onClickCreateRoomPanel(){
-        this.UI.showAndHideCreateRoomPanel()
+        this.ui.showAndHideCreateRoomPanel()
     }
 
     onClickFastJoin(){

@@ -22,11 +22,11 @@ public class RoomPlayer extends BaseTimeEntity {
     @Column(name = "id", nullable = false)
     UUID id;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "room_id")
     private Room room;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "player_id")
     private Player player;
 

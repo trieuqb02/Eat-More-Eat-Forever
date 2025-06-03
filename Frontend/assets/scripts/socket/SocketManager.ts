@@ -1,21 +1,37 @@
-import { _decorator, Component, Node } from "cc";
 import { Socket } from "socket.io-client";
-const { ccclass, property } = _decorator;
 
-@ccclass("SocketManager")
-export class SocketManager extends Component {
-  private socket: Socket;
+export class SocketManager {
+  private static _instance: SocketManager;
 
-  start() {
+  public socket: Socket | null = null;
+
+  private constructor() {
     this.initSocket();
   }
 
-  initSocket() {
+  public static getInstance(): SocketManager {
+    if (!this._instance) {
+      this._instance = new SocketManager();
+    }
+    return this._instance;
+  }
+
+  private initSocket() {
+    if (this.socket) return;
+
     this.socket = (window as any).io("http://localhost:3000");
-    console.log(this.socket);
 
     this.socket.on("connect", () => {
-      console.log("Connected:", this.socket.id);
+      console.log("Socket connected:", this.socket?.id);
     });
   }
+
+  public emit(event: string, data: any) {
+    this.socket?.emit(event, data);
+  }
+
+  public on(event: string, callback: (...args: any[]) => void) {
+    this.socket?.on(event, callback);
+  }
+
 }

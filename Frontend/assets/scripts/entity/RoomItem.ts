@@ -1,8 +1,8 @@
 interface RoomItem {
     id: string;
     state: string;
-    quantityPlayer: number;
+    maxPlayers: number;
     quantityPresent?: number;
-    nameRoom: string;
+    name: string;
   }
   

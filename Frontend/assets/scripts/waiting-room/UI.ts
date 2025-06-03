@@ -29,7 +29,7 @@ export class UI extends Component {
             return idNode == roomItem.id;
         });
 
-        node.getChildByName("Quantity").getComponent(Label).string = `${roomItem.quantityPresent}/${roomItem.quantityPlayer}`
+        node.getChildByName("Quantity").getComponent(Label).string = `${roomItem.quantityPresent}/${roomItem.maxPlayers}`
     }
 
     public deleteRoom(id : string): void {
@@ -41,6 +41,14 @@ export class UI extends Component {
         });
 
         this.listRoom.content.removeChild(node);
+    }
+
+    public heighlightRoom(id: string){
+        const arr = this.listRoom.content.children;
+        arr.forEach(element => {
+            const roomId = element.getComponent(Room).getId();
+            element.getComponent(Room).setSelected(id == roomId);
+        })
     }
 
     public showAndHideCreateRoomPanel(){
