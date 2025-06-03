@@ -3,7 +3,7 @@ import { Socket } from "socket.io-client";
 export class SocketManager {
   private static _instance: SocketManager;
 
-  public socket: Socket | null = null;
+  private socket: Socket | null = null;
 
   private constructor() {
     this.initSocket();

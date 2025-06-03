@@ -11,8 +11,6 @@ export class CreateRommManager extends Component {
   @property(Label)
   private quantityLabel: Label = null;
 
-  private socketManager =  SocketManager.getInstance();
-
   @property
   private maxiumPlayer: number = 0;
 
@@ -20,6 +18,8 @@ export class CreateRommManager extends Component {
   private defaultQuantity: number = 0;
 
   private quantity: number = 0;
+
+  private socketManager =  SocketManager.getInstance();
 
   protected start(): void {
     this.quantity = this.defaultQuantity;
@@ -49,15 +49,20 @@ export class CreateRommManager extends Component {
       quantity: this.quantity,
     });
 
-    this.socketManager.on(EventName.CREATED_ROOM, (val) => {
-      console.log(val)
-    });
+    this.socketManager.on(EventName.CREATED_ROOM, this.createdRoom.bind(this));
 
     this.node.active = false;
   }
 
+  createdRoom(data:RoomItem){
+    this.socketManager.emit(EventName.JOIN_ROOM, {
+      id: data.id,
+      name: data.name,
+    })
+  }
+
   protected onDisable(): void {
-    this.quantity = 0;
+    this.quantity = this.defaultQuantity;
     this.nameEditBox.string = "";
   }
 }

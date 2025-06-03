@@ -1,4 +1,5 @@
 export enum EventName {
+    SELECTED_ROOM = "SELECTED_ROOM",
     CREATE_ROOM = "CREATE_ROOM",
     CREATED_ROOM = "CREATED_ROOM",
     NEW_ROOM = "NEW_ROOM",

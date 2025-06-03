@@ -1,30 +1,28 @@
-import { _decorator, Component, Node } from 'cc';
-import { UI } from './UI';
+import { _decorator, Component, Node } from "cc";
+import { UI } from "./UI";
+import { EventName } from "../utils/EventName";
 const { ccclass, property } = _decorator;
 
-@ccclass('MainManager')
+@ccclass("MainManager")
 export class MainManager extends Component {
-    @property(UI)
-    ui: UI = null;
+  @property(UI)
+  ui: UI = null;
 
-    start() {
+  start() {}
 
-    }
+  update(deltaTime: number) {}
 
-    update(deltaTime: number) {
-        
-    }
+  onClickCreateRoomPanel() {
+    this.ui.showAndHideCreateRoomPanel();
+  }
 
-    onClickCreateRoomPanel(){
-        this.ui.showAndHideCreateRoomPanel()
-    }
+  onClickFastJoin() {
+    // handle fast join
+  }
 
-    onClickFastJoin(){
-        // handle fast join
-    }
-
-    onClickJoinRoom(){
-        // handle fast join
-    }
+  onClickJoinRoom() {
+    const roomId = localStorage.getItem(EventName.SELECTED_ROOM);
+    if (!roomId) return;
+    this.ui.showAndHideJoinRoomPanel();
+  }
 }
-

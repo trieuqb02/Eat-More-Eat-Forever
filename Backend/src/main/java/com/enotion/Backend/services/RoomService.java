@@ -65,29 +65,27 @@ public class RoomService implements IRoomService {
 
     @Override
     public RoomMV updateRoom(JoinRoomVM data) {
-        Player player = Player.builder()
-                .name(data.name())
-                .build();
 
         Room room = roomRepository.findById(data.id()).orElseThrow();
 
-        int size = room.getPlayers().size();
-
-        if(size != 1){
-            room.getPlayers().add(player);
-
+        if(!room.getName().equals(data.name())){
+            Player player = new Player();
+            player.setName(data.name());
             player.setCurrentRoom(room);
 
-            RoomPlayer roomPlayer = RoomPlayer.builder()
-                    .score(0)
-                    .player(player)
-                    .isHost(false)
-                    .room(room)
-                    .joinedAt(LocalDateTime.now())
-                    .build();
+            room.getPlayers().add(player);
 
-            roomPlayer = roomPlayerRepository.save(roomPlayer);
-            return RoomMV.convertRoomMV(roomPlayer.getRoom());
+            room = roomRepository.save(room);
+
+//            RoomPlayer roomPlayer = RoomPlayer.builder()
+//                    .score(0)
+//                    .player(player)
+//                    .isHost(false)
+//                    .joinedAt(LocalDateTime.now())
+//                    .build();
+//
+//            roomPlayerRepository.save(roomPlayer);
+            return RoomMV.convertRoomMV(room);
         }
 
         return RoomMV.convertRoomMV(room);

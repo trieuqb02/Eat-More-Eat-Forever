@@ -7,6 +7,9 @@ export class UI extends Component {
     @property(Node)
     private createRoomPanel: Node = null;
 
+    @property(Node)
+    private joinRoomPanel: Node = null;
+
     @property(ScrollView)
     private listRoom: ScrollView = null;
 
@@ -53,6 +56,10 @@ export class UI extends Component {
 
     public showAndHideCreateRoomPanel(){
         this.createRoomPanel.active = !this.createRoomPanel.active;
+    }
+
+    public showAndHideJoinRoomPanel(){
+        this.joinRoomPanel.active = !this.joinRoomPanel.active;
     }
 }
 

@@ -11,11 +11,7 @@ export class RoomManager extends Component {
     @property(UI)
     private ui: UI  
 
-    private selectedItemId: string | null = null;
-
-    private itemComponents: RoomItem[] = [];
-
-    private socketMamager = SocketManager.getInstance();
+    private socketMamager: SocketManager = SocketManager.getInstance();
 
     start() {
       this.socketMamager.emit(EventName.GET_ALL_ROOM, "get all room")
@@ -24,13 +20,15 @@ export class RoomManager extends Component {
       this.socketMamager.on(EventName.UPDATE_ROOM, this.updateRoomItem.bind(this))
 
       this.node.on(EventType.EVENT_CLICK_SELECT_ROOM, (event: MyEvent) => {
-        this.ui.heighlightRoom(event.detail)
+        this.ui.heighlightRoom(event.detail);
+        localStorage.setItem(EventName.SELECTED_ROOM, event.detail);
         event.propagationStopped = true;
       });
     }
 
     renderUI(data : RoomItem[]): void{
       data.forEach(element => {
+        
         this.ui.addRoomItem(element)
       })
     }
@@ -40,7 +38,7 @@ export class RoomManager extends Component {
     }
 
     updateRoomItem(data: RoomItem): void {
-      this.ui.addRoomItem(data);
+      this.ui.updateRoom(data);
     }
 
     update(deltaTime: number) {
