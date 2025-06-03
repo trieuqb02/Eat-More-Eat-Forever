@@ -1,65 +1,89 @@
-import { _decorator, Component, instantiate, Label, Node, Prefab, ScrollView } from 'cc';
-import { Room } from './Room';
+import {
+  _decorator,
+  Component,
+  instantiate,
+  Label,
+  Node,
+  Prefab,
+  ScrollView,
+} from "cc";
+import { Room } from "./Room";
+import { MessageManager } from "./MessageManager";
 const { ccclass, property } = _decorator;
 
-@ccclass('UI')
+@ccclass("UI")
 export class UI extends Component {
-    @property(Node)
-    private createRoomPanel: Node = null;
+  @property(Node)
+  private createRoomPanel: Node = null;
 
-    @property(Node)
-    private joinRoomPanel: Node = null;
+  @property(Node)
+  private messagePanel: Node = null;
 
-    @property(ScrollView)
-    private listRoom: ScrollView = null;
+  @property(Node)
+  private joinRoomPanel: Node = null;
 
-    @property(Prefab)
-    private roomItemPrefab: Prefab = null;
+  @property(ScrollView)
+  private listRoom: ScrollView = null;
 
-    public addRoomItem(roomItem: RoomItem): void {
-        const room = instantiate(this.roomItemPrefab);
+  @property(Prefab)
+  private roomItemPrefab: Prefab = null;
 
-        room.getComponent(Room).init(roomItem);
+  public addRoomItem(roomItem: RoomItem): void {
+    const room = instantiate(this.roomItemPrefab);
 
-        this.listRoom.content.addChild(room);
-    }
+    room.getComponent(Room).init(roomItem);
 
-    public updateRoom(roomItem: RoomItem): void {
-        const nodeArr = this.listRoom.content.children;
+    this.listRoom.content.addChild(room);
+  }
 
-        const node = nodeArr.find(element => {
-            const idNode = element.getChildByName("Id").getComponent(Label).string;
-            return idNode == roomItem.id;
-        });
+  public updateRoom(roomItem: RoomItem): void {
+    const nodeArr = this.listRoom.content.children;
 
-        node.getChildByName("Quantity").getComponent(Label).string = `${roomItem.quantityPresent}/${roomItem.maxPlayers}`
-    }
+    const node = nodeArr.find((element) => {
+      const idNode = element.getComponent(Room).getId();
+      return idNode == roomItem.id;
+    });
 
-    public deleteRoom(id : string): void {
-        const nodeArr = this.listRoom.content.children;
+    node
+      .getChildByName("Quantity")
+      .getComponent(
+        Label
+      ).string = `${roomItem.quantityPresent}/${roomItem.maxPlayers}`;
+  }
 
-        const node = nodeArr.find(element => {
-            const idNode = element.getChildByName("Id").getComponent(Label).string;
-            return idNode == id;
-        });
+  public deleteRoom(id: string): void {
+    const nodeArr = this.listRoom.content.children;
 
-        this.listRoom.content.removeChild(node);
-    }
+    const node = nodeArr.find((element) => {
+      const idNode = element.getChildByName("Id").getComponent(Label).string;
+      return idNode == id;
+    });
 
-    public heighlightRoom(id: string){
-        const arr = this.listRoom.content.children;
-        arr.forEach(element => {
-            const roomId = element.getComponent(Room).getId();
-            element.getComponent(Room).setSelected(id == roomId);
-        })
-    }
+    this.listRoom.content.removeChild(node);
+  }
 
-    public showAndHideCreateRoomPanel(){
-        this.createRoomPanel.active = !this.createRoomPanel.active;
-    }
+  public heighlightRoom(id: string) {
+    const arr = this.listRoom.content.children;
+    arr.forEach((element) => {
+      const roomId = element.getComponent(Room).getId();
+      element.getComponent(Room).setSelected(id == roomId);
+    });
+  }
 
-    public showAndHideJoinRoomPanel(){
-        this.joinRoomPanel.active = !this.joinRoomPanel.active;
-    }
+  public showAndHideCreateRoomPanel() {
+    this.createRoomPanel.active = !this.createRoomPanel.active;
+  }
+
+  public showAndHideJoinRoomPanel() {
+    this.joinRoomPanel.active = !this.joinRoomPanel.active;
+  }
+
+  public showAndHideMessagePanel() {
+    this.messagePanel.active = !this.messagePanel.active;
+  }
+
+  public assignMessagePanel(message: string) {
+    this.messagePanel.active = true;
+    this.messagePanel.getComponent(MessageManager).showMessage(message);
+  }
 }
-

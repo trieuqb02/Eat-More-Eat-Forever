@@ -17,7 +17,7 @@ import java.util.UUID;
 @DynamicUpdate
 @DynamicInsert
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class Player extends BaseTimeEntity{
+public class Player extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", nullable = false)

@@ -1,12 +1,13 @@
 package com.enotion.Backend.services;
 
-import com.enotion.Backend.payload.JoinRoomVM;
-import com.enotion.Backend.payload.RoomMV;
-import com.enotion.Backend.payload.RoomVM;
 import com.enotion.Backend.entities.Player;
 import com.enotion.Backend.entities.Room;
 import com.enotion.Backend.entities.RoomPlayer;
 import com.enotion.Backend.enums.RoomState;
+import com.enotion.Backend.payload.JoinRoomVM;
+import com.enotion.Backend.payload.RoomAndPlayerMV;
+import com.enotion.Backend.payload.RoomMV;
+import com.enotion.Backend.payload.RoomVM;
 import com.enotion.Backend.repositories.PlayerRepository;
 import com.enotion.Backend.repositories.RoomPlayerRepository;
 import com.enotion.Backend.repositories.RoomRepository;
@@ -31,7 +32,7 @@ public class RoomService implements IRoomService {
     RoomPlayerRepository roomPlayerRepository;
 
     @Override
-    public RoomMV createRoom(RoomVM data) {
+    public RoomAndPlayerMV createRoom(RoomVM data) {
         Player player = Player.builder()
                 .name(data.name())
                 .build();
@@ -45,6 +46,8 @@ public class RoomService implements IRoomService {
         room.getPlayers().add(player);
         player.setCurrentRoom(room);
 
+        room = roomRepository.save(room);
+
         RoomPlayer roomPlayer = RoomPlayer.builder()
                 .score(0)
                 .player(player)
@@ -54,7 +57,7 @@ public class RoomService implements IRoomService {
                 .build();
 
         roomPlayer = roomPlayerRepository.save(roomPlayer);
-        return RoomMV.convertRoomMV(roomPlayer.getRoom());
+        return new RoomAndPlayerMV(RoomMV.convertRoomMV(roomPlayer.getRoom()), roomPlayer.getPlayer().getId());
     }
 
     @Override
@@ -64,30 +67,34 @@ public class RoomService implements IRoomService {
     }
 
     @Override
-    public RoomMV updateRoom(JoinRoomVM data) {
+    public RoomAndPlayerMV updateRoom(JoinRoomVM data) {
 
         Room room = roomRepository.findById(data.id()).orElseThrow();
-
-        if(!room.getName().equals(data.name())){
+        if (!room.getName().equals(data.name()) && room.getPlayers().size() < room.getMaxPlayers()) {
             Player player = new Player();
             player.setName(data.name());
             player.setCurrentRoom(room);
+
+            player = playerRepository.save(player);
 
             room.getPlayers().add(player);
 
             room = roomRepository.save(room);
 
-//            RoomPlayer roomPlayer = RoomPlayer.builder()
-//                    .score(0)
-//                    .player(player)
-//                    .isHost(false)
-//                    .joinedAt(LocalDateTime.now())
-//                    .build();
-//
-//            roomPlayerRepository.save(roomPlayer);
-            return RoomMV.convertRoomMV(room);
+            RoomPlayer roomPlayer = RoomPlayer.builder()
+                    .score(0)
+                    .player(player)
+                    .room(room)
+                    .isHost(false)
+                    .joinedAt(LocalDateTime.now())
+                    .build();
+
+            roomPlayer = roomPlayerRepository.save(roomPlayer);
+            return new RoomAndPlayerMV(RoomMV.convertRoomMV(roomPlayer.getRoom()), roomPlayer.getPlayer().getId());
+        } else if (room.getName().equals(data.name())) {
+            return new RoomAndPlayerMV(RoomMV.convertRoomMV(room), room.getPlayers().iterator().next().getId());
         }
 
-        return RoomMV.convertRoomMV(room);
+        return null;
     }
 }

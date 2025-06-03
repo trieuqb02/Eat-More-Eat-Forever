@@ -36,6 +36,6 @@ public class Room extends BaseTimeEntity{
     int maxPlayers = 4;
 
     @Builder.Default
-    @OneToMany(mappedBy = "currentRoom", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "currentRoom", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Player> players = new HashSet<>();
 }

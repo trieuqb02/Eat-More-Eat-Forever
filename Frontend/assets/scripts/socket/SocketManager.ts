@@ -26,12 +26,11 @@ export class SocketManager {
     });
   }
 
-  public emit(event: string, data: any) {
-    this.socket?.emit(event, data);
+  public emit(event: string, data: any, callback?: (...args: any[]) => void) {
+    this.socket?.emit(event, data, callback);
   }
 
   public on(event: string, callback: (...args: any[]) => void) {
     this.socket?.on(event, callback);
   }
-
 }

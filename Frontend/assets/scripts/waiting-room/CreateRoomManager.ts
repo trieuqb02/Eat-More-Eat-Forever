@@ -1,6 +1,17 @@
-import { _decorator, Button, Component, EditBox, Label, Node } from "cc";
+import {
+  _decorator,
+  Button,
+  Component,
+  director,
+  EditBox,
+  Label,
+  Node,
+} from "cc";
 import { SocketManager } from "../socket/SocketManager";
 import { EventName } from "../utils/EventName";
+import { UI } from "./UI";
+import { Code } from "../utils/Code";
+import { RoomAndPlayer } from "../entity/RoomAndPlayer";
 const { ccclass, property } = _decorator;
 
 @ccclass("CreateRommManager")
@@ -11,6 +22,9 @@ export class CreateRommManager extends Component {
   @property(Label)
   private quantityLabel: Label = null;
 
+  @property(UI)
+  private ui: UI = null;
+
   @property
   private maxiumPlayer: number = 0;
 
@@ -19,7 +33,9 @@ export class CreateRommManager extends Component {
 
   private quantity: number = 0;
 
-  private socketManager =  SocketManager.getInstance();
+  private socketManager = SocketManager.getInstance();
+
+  protected onLoad(): void {}
 
   protected start(): void {
     this.quantity = this.defaultQuantity;
@@ -44,21 +60,22 @@ export class CreateRommManager extends Component {
 
   private onComfirm(): void {
     if (!this.nameEditBox.string) return;
-    this.socketManager.emit(EventName.CREATE_ROOM, {
-      name: this.nameEditBox.string,
-      quantity: this.quantity,
-    });
-
-    this.socketManager.on(EventName.CREATED_ROOM, this.createdRoom.bind(this));
+    this.socketManager.emit(
+      EventName.CREATE_ROOM,
+      {
+        name: this.nameEditBox.string,
+        quantity: this.quantity,
+      },
+      this.reieveResponseCreateRoom.bind(this)
+    );
 
     this.node.active = false;
   }
 
-  createdRoom(data:RoomItem){
-    this.socketManager.emit(EventName.JOIN_ROOM, {
-      id: data.id,
-      name: data.name,
-    })
+  reieveResponseCreateRoom(code: number, data: RoomAndPlayer | string) {
+    if (code == Code.SUCCESS) {
+      director.loadScene("room");
+    }
   }
 
   protected onDisable(): void {

@@ -3,10 +3,12 @@ import { UI } from "./UI";
 import { EventName } from "../utils/EventName";
 const { ccclass, property } = _decorator;
 
-@ccclass("MainManager")
-export class MainManager extends Component {
+@ccclass("ActionBarManager")
+export class ActionBarManager extends Component {
   @property(UI)
   ui: UI = null;
+
+  
 
   start() {}
 
