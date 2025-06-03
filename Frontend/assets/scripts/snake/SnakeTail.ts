@@ -1,27 +1,29 @@
-import { _decorator, Component, Node } from 'cc';
-import { SnakeHead } from './SnakeHead';
+import { _decorator, Component, Quat, Vec3 } from 'cc';
+import { SnakeCtrl } from './SnakeCtrl';
 const { ccclass, property } = _decorator;
 
 @ccclass('SnakeTail')
 export class SnakeTail extends Component {
-    @property(Node)
-    head: Node = null;
-
     @property
     followDelay: number = 10; 
 
-    private headScript: SnakeHead;
-
-    start () {
-        this.headScript = this.head.getComponent(SnakeHead);
-    }
+    private tempPos = new Vec3();
+    private tempRot = new Quat();
+    @property
+    private speed: number = 10;
 
     update(deltaTime: number) {
-        const history = this.headScript.getHistory();
+        const history = SnakeCtrl.Instance.getHistory();
         if (history.length > this.followDelay) {
             const step = history[this.followDelay];
-            this.node.setPosition(step.position);
-            this.node.setRotation(step.rotation);
+
+            // Lerp move
+            Vec3.lerp(this.tempPos, this.node.position, step.position, deltaTime * this.speed);
+            this.node.setPosition(this.tempPos);
+
+            // Lerp rotate
+            Quat.slerp(this.tempRot, this.node.rotation, step.rotation, deltaTime * this.speed);
+            this.node.setRotation(this.tempRot);
         }
     }
 }

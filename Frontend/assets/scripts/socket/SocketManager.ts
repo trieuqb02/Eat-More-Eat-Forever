@@ -23,7 +23,6 @@ export class SocketManager extends Component {
         this.socket.on("chat", (val) => {
             console.log(val)
         });
-
     }
 }
 

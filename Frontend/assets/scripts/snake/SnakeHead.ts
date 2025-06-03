@@ -6,6 +6,12 @@ type SnakeStep = {
     rotation: Quat,
 };
 
+export enum SnakeType {
+    RED,
+    BLUE,
+    GREEN
+}
+
 @ccclass('SnakeHead')
 export class SnakeHead extends Component {
     @property

@@ -1,136 +1,148 @@
-import { _decorator, Component, EventKeyboard, Input, input, instantiate, KeyCode, math, Node, Prefab, Quat, Vec3 } from 'cc';
+import { _decorator, Collider2D, Component, Contact2DType, Enum, EventKeyboard, Input, input, 
+    instantiate, IPhysics2DContact, KeyCode, Node, Prefab, Quat, Vec3 } from 'cc';
+import { Food } from '../food/Food';
+import { SnakeTail } from './SnakeTail';
+import { GameManger } from '../GameManger';
 const { ccclass, property } = _decorator;
+
+type SnakeStep = {
+    position: Vec3,
+    rotation: Quat,
+};
+
+export enum EntityType {
+    RED,
+    GREEN,
+    BLUE
+}
 
 @ccclass('SnakeCtrl')
 export class SnakeCtrl extends Component {
-    // move
+    public static Instance: SnakeCtrl = null; // singleton
+
     @property
-    private moveSpeed: number = 5;
+    moveSpeed: number = 100;
+
     @property
     private steerSpeed: number = 100;
-    @property
-    private bodySpeed: number = 5;
-    @property
-    private gap: number = 10;
     private steerDirection: number = 1;
+    private currentAngle = 0;
 
-    @property(Prefab)
-    private bodyPrefab: Prefab;
+    private history: SnakeStep[] = [];
 
-    // Lists
-    private bodyParts: Node[] = [];
-    private positionsHistory: Vec3[] = [];
+    @property({ type: Enum(EntityType) })
+    snakeType: EntityType = EntityType.RED;
+
+    @property({ type: Prefab })
+    tailPrefab: Prefab = null;
+    @property({ type: Node })
+    tailParent: Node = null;
+    @property
+    tailSpacing: number = 10;
+    private tailList: Node[] = [];
+
+    private score: number = 0;
 
     onLoad() {
+        if (SnakeCtrl.Instance === null) SnakeCtrl.Instance = this; // singleton
+
         input.on(Input.EventType.KEY_DOWN, this.onKeyDown, this);
         input.on(Input.EventType.KEY_UP, this.onKeyUp, this);
+
+        const collider = this.getComponent(Collider2D);
+        if (collider) {
+            collider.on(Contact2DType.BEGIN_CONTACT, this.onBeginContact, this);
+        }
+    }
+
+    onDestroy() {
+        if (SnakeCtrl.Instance === this) 
+            SnakeCtrl.Instance = null;
+
+        input.off(Input.EventType.KEY_DOWN, this.onKeyDown, this);
+        input.off(Input.EventType.KEY_UP, this.onKeyUp, this);
     }
 
     protected start(): void {
-        this.growSnake();
-        this.growSnake();
-        this.growSnake();
-        this.growSnake();
+        this.currentAngle = this.node.eulerAngles.z;
     }
 
-    protected update(dt: number): void {
-        // Tính góc xoay mới (chỉ trên trục Z)
-        const angle = this.node.eulerAngles.z + this.steerSpeed * this.steerDirection * dt;
-        this.node.setRotationFromEuler(0, 0, angle);
+    update(deltaTime: number) {
+        // steet
+        this.steer(deltaTime);
 
         // move forward
-        const forward = new Vec3(1, 0, 0); // hướng gốc là qua phải (trục X)
-        const quat = this.node.rotation;
-        const dir = Vec3.transformQuat(new Vec3(), forward, quat); // dir sau quay
-        const movement = dir.multiplyScalar(this.moveSpeed * dt);
-        this.node.setPosition(this.node.position.clone().add(movement));
+        this.moveForward(deltaTime)
 
-        this.positionsHistory.unshift(this.node.worldPosition.clone());
+        // save trans
+        this.history.unshift({
+            position: this.node.position.clone(),
+            rotation: this.node.rotation.clone(),
+        });
 
-        for (let i = 0; i < this.bodyParts.length; i++) {
-            const index = Math.min(i * this.gap, this.positionsHistory.length - 1);
-            const point = this.positionsHistory[index];
-
-            const body = this.bodyParts[i];
-            const bodyPos = body.worldPosition;
-            let moveDir = point.subtract(bodyPos);
-
-            const dist = moveDir.length();
-
-            if (dist > 0.001) {
-                moveDir.normalize();
-                const newPos = bodyPos.add(moveDir.multiplyScalar(this.bodySpeed * dt));
-                body.setWorldPosition(newPos);
-
-                const angleDeg = Math.atan2(moveDir.y, moveDir.x) * 180 / Math.PI;
-                body.setRotationFromEuler(0, 0, angleDeg);
-            }
-
-            // const angle = Math.atan2(moveDir.y, moveDir.x) * 180 / Math.PI;
-            // body.setRotationFromEuler(0, 0, angle);
+        // limit
+        if (this.history.length > 1000) {
+            this.history.pop();
         }
-        const maxHistory = this.bodyParts.length * this.gap + 10;
-        if (this.positionsHistory.length > maxHistory) {
-            this.positionsHistory.length = maxHistory;
+    }
+
+    onBeginContact(selfCollider: Collider2D, otherCollider: Collider2D, contact: IPhysics2DContact) {
+        const food = otherCollider.getComponent(Food);
+        if (food && food.foodType === this.snakeType) {
+            this.addScore(food.scoreAmount);
+            food.eat(); 
+            this.grow();
+        } 
+    }
+
+    addScore(amount){
+        this.score += amount;
+        GameManger.Instance.setScore(this.score);
+    }
+
+    grow() {
+        if (!this.tailPrefab || !this.tailParent) return;
+
+        const newTail = instantiate(this.tailPrefab);
+        this.tailParent.addChild(newTail);
+
+        const delay = (this.tailList.length + 1) * this.tailSpacing;
+        const tailComp = newTail.getComponent(SnakeTail);
+        if (tailComp) {
+            tailComp.followDelay = delay;
         }
-        
-        // // Move forward
-        // const forward = this.node.forward.clone();
-        // const movement = forward.multiplyScalar(this.moveSpeed * dt);
-        // this.node.position = this.node.position.add(movement);
+        this.tailList.push(newTail);
+    }
 
-        // // Steer
-        // let euler = this.node.eulerAngles.clone();
-        // euler.y += this.steerSpeed * this.steerDirection * dt;
-        // let quat = new Quat();
-        // Quat.fromEuler(quat, euler.x, euler.y, euler.z);
-        // this.node.rotation = quat;
+    moveForward(dt){
+        const forward = this.node.up;
+        const moveDelta = forward.clone().multiplyScalar(this.moveSpeed * dt);
+        this.node.setPosition(this.node.position.add(moveDelta));
+    }
 
-        // // Store position history
-        // this.positionsHistory.unshift(this.node.worldPosition.clone());
+    steer(dt){
+        this.currentAngle += this.steerSpeed * this.steerDirection * dt;
+        this.node.setRotationFromEuler(0, 0, this.currentAngle);
+    }
 
-        // // Move body parts
-        // for (let i = 0; i < this.bodyParts.length; i++) {
-        //     const index = Math.min(i * this.gap, this.positionsHistory.length - 1);
-        //     const point = this.positionsHistory[index];
-
-        //     const body = this.bodyParts[i];
-        //     const bodyPos = body.worldPosition;
-        //     const moveDirection = point.subtract(bodyPos).normalize();
-
-        //     const newPos = bodyPos.add(moveDirection.multiplyScalar(this.bodySpeed * dt));
-        //     body.setWorldPosition(newPos);
-
-        //     // Look at
-        //     const lookAt = point.clone().subtract(body.worldPosition).normalize();
-        //     body.lookAt(point);
-        // }
+    getHistory(): SnakeStep[] {
+        return this.history;
     }
 
     onKeyDown(event: EventKeyboard) {
-        if (event.keyCode === KeyCode.ARROW_LEFT) {
+        if (event.keyCode === KeyCode.ARROW_LEFT || event.keyCode === KeyCode.KEY_A) {
             this.steerDirection = 1;
-        } else if (event.keyCode === KeyCode.ARROW_RIGHT) {
+        } else if (event.keyCode === KeyCode.ARROW_RIGHT || event.keyCode === KeyCode.KEY_D) {
             this.steerDirection = -1;
         }
     }
 
     onKeyUp(event: EventKeyboard) {
-        if (event.keyCode === KeyCode.ARROW_LEFT || event.keyCode === KeyCode.ARROW_RIGHT) {
+        if (event.keyCode === KeyCode.ARROW_LEFT || event.keyCode === KeyCode.ARROW_RIGHT
+            || event.keyCode === KeyCode.KEY_A || event.keyCode === KeyCode.KEY_D
+        ) {
             this.steerDirection = 0;
         }
-    }
-
-    private growSnake() {
-        if (!this.bodyPrefab) {
-            console.error('Prefab is missing!');
-            return;
-        }
-        // Instantiate body instance and
-        // add it to the list
-        const body = instantiate(this.bodyPrefab);
-        this.node.parent!.addChild(body);
-        this.bodyParts.push(body);
     }
 }
 

@@ -21,7 +21,6 @@ export class SnakeManager extends Component {
             const tailNode = instantiate(this.tailPrefab);
             this.tailParent.addChild(tailNode);
             const tailScript = tailNode.getComponent(SnakeTail);
-            tailScript.head = this.snakeHead;
             tailScript.followDelay = i * 10; 
         }
     }
