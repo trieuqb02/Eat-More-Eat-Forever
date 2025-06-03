@@ -9,4 +9,8 @@ public enum EventName {
     JOIN_ROOM,
     LEAVE_ROOM,
     GET_ALL_ROOM,
+
+    // snake
+    MOVE,
+    SNAKE_MOVED,
 }

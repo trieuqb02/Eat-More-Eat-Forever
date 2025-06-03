@@ -3,6 +3,8 @@ import { _decorator, Collider2D, Component, Contact2DType, Enum, EventKeyboard, 
 import { Food } from '../food/Food';
 import { SnakeTail } from './SnakeTail';
 import { GameManger } from '../GameManger';
+import { SocketManager } from '../socket/SocketManager';
+import { EventName } from '../utils/EventName';
 const { ccclass, property } = _decorator;
 
 type SnakeStep = {
@@ -19,6 +21,8 @@ export enum EntityType {
 @ccclass('SnakeCtrl')
 export class SnakeCtrl extends Component {
     public static Instance: SnakeCtrl = null; // singleton
+
+    private socketManager = SocketManager.getInstance();
 
     @property
     moveSpeed: number = 100;
@@ -43,6 +47,9 @@ export class SnakeCtrl extends Component {
 
     private score: number = 0;
 
+    private playerId: String = "1";
+    public otherPlayers: Record<string, Node> = {};
+
     onLoad() {
         if (SnakeCtrl.Instance === null) SnakeCtrl.Instance = this; // singleton
 
@@ -53,6 +60,18 @@ export class SnakeCtrl extends Component {
         if (collider) {
             collider.on(Contact2DType.BEGIN_CONTACT, this.onBeginContact, this);
         }
+
+        this.socketManager.on(EventName.SNAKE_MOVED, (data) => {
+            const { id, x, y, rotation } = data;
+
+            if (id === this.playerId) return;
+
+            const player = this.otherPlayers[id];
+            if (player) {
+                player.setPosition(new Vec3(x, y, 0));
+                player.setRotationFromEuler(0, 0, rotation);
+            }
+        });
     }
 
     onDestroy() {
@@ -118,6 +137,14 @@ export class SnakeCtrl extends Component {
         const forward = this.node.up;
         const moveDelta = forward.clone().multiplyScalar(this.moveSpeed * dt);
         this.node.setPosition(this.node.position.add(moveDelta));
+
+        // emit to server
+        this.socketManager.emit(EventName.MOVE, {
+            id: this.playerId,
+            x: this.node.position.x,
+            y: this.node.position.y,
+            rot: this.currentAngle
+        });
     }
 
     steer(dt){
