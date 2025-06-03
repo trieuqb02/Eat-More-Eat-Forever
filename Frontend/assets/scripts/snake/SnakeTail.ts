@@ -19,7 +19,9 @@ export class SnakeTail extends Component {
     update(deltaTime: number) {
         const history = this.headScript.getHistory();
         if (history.length > this.followDelay) {
-            this.node.setPosition(history[this.followDelay]);
+            const step = history[this.followDelay];
+            this.node.setPosition(step.position);
+            this.node.setRotation(step.rotation);
         }
     }
 }

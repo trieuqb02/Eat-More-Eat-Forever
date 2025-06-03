@@ -1,17 +1,21 @@
-import { _decorator, Component, EventKeyboard, Input, input, KeyCode, Node, Vec3 } from 'cc';
+import { _decorator, Component, EventKeyboard, Input, input, KeyCode, Quat, Vec3 } from 'cc';
 const { ccclass, property } = _decorator;
+
+type SnakeStep = {
+    position: Vec3,
+    rotation: Quat,
+};
 
 @ccclass('SnakeHead')
 export class SnakeHead extends Component {
     @property
-    speed: number = 100;
-
-    private direction: Vec3 = new Vec3(0, 0, 1); 
-    private positions: Vec3[] = [];
+    moveSpeed: number = 100;
 
     @property
     private steerSpeed: number = 100;
     private steerDirection: number = 1;
+
+    private history: SnakeStep[] = [];
 
     onLoad() {
         input.on(Input.EventType.KEY_DOWN, this.onKeyDown, this);
@@ -24,25 +28,29 @@ export class SnakeHead extends Component {
     }
 
     update(deltaTime: number) {
+        // rotate
         const angle = this.node.eulerAngles.z + this.steerSpeed * this.steerDirection * deltaTime;
         this.node.setRotationFromEuler(0, 0, angle);
 
         // move forward
-        const forward = new Vec3(1, 0, 0);
-        const quat = this.node.rotation;
-        const dir = Vec3.transformQuat(new Vec3(), forward, quat); 
-        const movement = dir.multiplyScalar(this.speed * deltaTime);
-        this.node.setPosition(this.node.position.clone().add(movement));
+        const forward = this.node.up;
+        const moveDelta = forward.clone().multiplyScalar(this.moveSpeed * deltaTime);
+        this.node.setPosition(this.node.position.add(moveDelta));
 
-        this.positions.unshift(this.node.position.clone());
+        // save trans
+        this.history.unshift({
+            position: this.node.position.clone(),
+            rotation: this.node.rotation.clone(),
+        });
 
-        if (this.positions.length > 1000) {
-            this.positions.pop();
+        // limit
+        if (this.history.length > 1000) {
+            this.history.pop();
         }
     }
 
-    getHistory(): Vec3[] {
-        return this.positions;
+    getHistory(): SnakeStep[] {
+        return this.history;
     }
 
     onKeyDown(event: EventKeyboard) {
