@@ -7,4 +7,7 @@ export enum EventName {
   LEAVE_ROOM = "LEAVE_ROOM",
   GET_ALL_ROOM = "GET_ALL_ROOM",
   JOIN_ROOM_FAIL = "JOIN_ROOM_FAIL",
+
+  MOVE = "MOVE",
+  SNAKE_MOVED = "SNAKE_MOVED",
 }
