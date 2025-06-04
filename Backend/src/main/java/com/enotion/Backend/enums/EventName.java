@@ -9,7 +9,7 @@ public enum EventName {
     LEAVE_ROOM,
     GET_ALL_ROOM,
 
-    JOIN_ROOM_FAIL
+    JOIN_ROOM_FAIL,
 
 
     // snake

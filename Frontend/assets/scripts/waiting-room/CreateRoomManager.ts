@@ -12,6 +12,7 @@ import { EventName } from "../utils/EventName";
 import { UI } from "./UI";
 import { Code } from "../utils/Code";
 import { RoomAndPlayer } from "../entity/RoomAndPlayer";
+import { SceneName } from "../utils/SceneName";
 const { ccclass, property } = _decorator;
 
 @ccclass("CreateRommManager")
@@ -74,7 +75,7 @@ export class CreateRommManager extends Component {
 
   reieveResponseCreateRoom(code: number, data: RoomAndPlayer | string) {
     if (code == Code.SUCCESS) {
-      director.loadScene("room");
+      director.loadScene(SceneName.ROOM);
     }
   }
 
