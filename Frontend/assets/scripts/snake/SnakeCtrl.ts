@@ -1,10 +1,11 @@
-import { _decorator, Collider2D, Component, Contact2DType, Enum, EventKeyboard, Input, input, 
+import { _decorator, Collider2D, Component, Contact2DType, Enum, EventKeyboard, find, Input, input, 
     instantiate, IPhysics2DContact, KeyCode, Node, Prefab, Quat, Vec3 } from 'cc';
 import { Food } from '../food/Food';
 import { SnakeTail } from './SnakeTail';
 import { GameManger } from '../GameManger';
 import { SocketManager } from '../socket/SocketManager';
 import { EventName } from '../utils/EventName';
+import { EntityType } from './EntityType';
 const { ccclass, property } = _decorator;
 
 type SnakeStep = {
@@ -12,17 +13,9 @@ type SnakeStep = {
     rotation: Quat,
 };
 
-export enum EntityType {
-    RED,
-    GREEN,
-    BLUE
-}
-
 @ccclass('SnakeCtrl')
 export class SnakeCtrl extends Component {
-    public static Instance: SnakeCtrl = null; // singleton
-
-    private socketManager = SocketManager.getInstance();
+    //public static Instance: SnakeCtrl = null; // singleton
 
     @property
     moveSpeed: number = 100;
@@ -47,11 +40,11 @@ export class SnakeCtrl extends Component {
 
     private score: number = 0;
 
-    private playerId: String = "1";
-    public otherPlayers: Record<string, Node> = {};
-
     onLoad() {
-        if (SnakeCtrl.Instance === null) SnakeCtrl.Instance = this; // singleton
+        //if (SnakeCtrl.Instance === null) SnakeCtrl.Instance = this; // singleton
+
+        // ref
+        this.tailParent = find('Canvas/TailParent');
 
         input.on(Input.EventType.KEY_DOWN, this.onKeyDown, this);
         input.on(Input.EventType.KEY_UP, this.onKeyUp, this);
@@ -60,23 +53,11 @@ export class SnakeCtrl extends Component {
         if (collider) {
             collider.on(Contact2DType.BEGIN_CONTACT, this.onBeginContact, this);
         }
-
-        this.socketManager.on(EventName.SNAKE_MOVED, (data) => {
-            const { id, x, y, rotation } = data;
-
-            if (id === this.playerId) return;
-
-            const player = this.otherPlayers[id];
-            if (player) {
-                player.setPosition(new Vec3(x, y, 0));
-                player.setRotationFromEuler(0, 0, rotation);
-            }
-        });
     }
 
     onDestroy() {
-        if (SnakeCtrl.Instance === this) 
-            SnakeCtrl.Instance = null;
+        // if (SnakeCtrl.Instance === this) 
+        //     SnakeCtrl.Instance = null;
 
         input.off(Input.EventType.KEY_DOWN, this.onKeyDown, this);
         input.off(Input.EventType.KEY_UP, this.onKeyUp, this);
@@ -109,7 +90,12 @@ export class SnakeCtrl extends Component {
         const food = otherCollider.getComponent(Food);
         if (food && food.foodType === this.snakeType) {
             this.addScore(food.scoreAmount);
-            food.eat(); 
+            // Emit to server food type eaten
+            GameManger.Instance.socketManager.emit("FOOD_EATEN", {
+                playerId: GameManger.Instance.playerId,
+                type: food.foodType
+            });
+            //food.eat(); 
             this.grow();
         } 
     }
@@ -129,6 +115,7 @@ export class SnakeCtrl extends Component {
         const tailComp = newTail.getComponent(SnakeTail);
         if (tailComp) {
             tailComp.followDelay = delay;
+            tailComp.snakeCtrl = this;
         }
         this.tailList.push(newTail);
     }
@@ -139,8 +126,8 @@ export class SnakeCtrl extends Component {
         this.node.setPosition(this.node.position.add(moveDelta));
 
         // emit to server
-        this.socketManager.emit(EventName.MOVE, {
-            id: this.playerId,
+        GameManger.Instance.socketManager.emit(EventName.MOVE, {
+            id: GameManger.Instance.playerId,
             x: this.node.position.x,
             y: this.node.position.y,
             rot: this.currentAngle

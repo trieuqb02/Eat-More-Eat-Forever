@@ -1,4 +1,4 @@
-import { _decorator, Component, Quat, Vec3 } from 'cc';
+import { _decorator, Component, find, Quat, Vec3 } from 'cc';
 import { SnakeCtrl } from './SnakeCtrl';
 const { ccclass, property } = _decorator;
 
@@ -12,8 +12,16 @@ export class SnakeTail extends Component {
     @property
     private speed: number = 10;
 
+    snakeCtrl: SnakeCtrl;
+
+    protected onLoad(): void {
+        const snakeNode = find('Canvas/Snake');
+        //this.snakeCtrl = snakeNode.getComponent(SnakeCtrl);
+    }
+
     update(deltaTime: number) {
-        const history = SnakeCtrl.Instance.getHistory();
+        if (!this.snakeCtrl) return;
+        const history = this.snakeCtrl.getHistory();
         if (history.length > this.followDelay) {
             const step = history[this.followDelay];
 

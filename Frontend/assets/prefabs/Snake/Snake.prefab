@@ -289,7 +289,7 @@
     "node": {
       "__id__": 1
     },
-    "_enabled": true,
+    "_enabled": false,
     "__prefab": {
       "__id__": 13
     },
@@ -385,6 +385,7 @@
       "__id__": 0
     },
     "fileId": "56jchFwahLF7WzBPLVRx+S",
+    "instance": null,
     "targetOverrides": null
   }
 ]
