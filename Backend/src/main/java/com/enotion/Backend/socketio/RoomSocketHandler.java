@@ -4,9 +4,9 @@ import com.corundumstudio.socketio.SocketIOClient;
 import com.corundumstudio.socketio.SocketIOServer;
 import com.corundumstudio.socketio.listener.DataListener;
 import com.enotion.Backend.entities.RoomPlayer;
+import com.enotion.Backend.enums.EventName;
 import com.enotion.Backend.enums.ResponseState;
 import com.enotion.Backend.payload.*;
-import com.enotion.Backend.enums.EventName;
 import com.enotion.Backend.services.RoomPlayerService;
 import com.enotion.Backend.services.RoomService;
 import lombok.AccessLevel;
@@ -14,7 +14,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -36,7 +40,7 @@ public class RoomSocketHandler {
     private DataListener<RoomVM> createRoom(SocketIOServer server) {
         return (socketIOClient, data, ackSender) -> {
             RoomAndPlayerMV roomAndPlayerMV = roomService.createRoom(data);
-            if (ackSender.isAckRequested()){
+            if (ackSender.isAckRequested()) {
                 socketIOClient.joinRoom(String.valueOf(roomAndPlayerMV.room().id()));
                 ackSender.sendAckData(ResponseState.CREATE_ROOM_SUCCESSFULLY.getCode(), roomAndPlayerMV);
             }
@@ -52,12 +56,12 @@ public class RoomSocketHandler {
         return (socketIOClient, data, ackSender) -> {
             RoomAndPlayerMV roomAndPlayerMV = roomService.updateRoom(data);
             List<PlayerMV> playerMVs = roomPlayerService.getPlayersInRoom(data.id());
-            if(ackSender.isAckRequested()) {
-                if(roomAndPlayerMV == null){
-                    ackSender.sendAckData(ResponseState.JOIN_FAILURE_ROOM.getCode(),ResponseState.JOIN_FAILURE_ROOM.getMessage());
+            if (ackSender.isAckRequested()) {
+                if (roomAndPlayerMV == null) {
+                    ackSender.sendAckData(ResponseState.JOIN_FAILURE_ROOM.getCode(), ResponseState.JOIN_FAILURE_ROOM.getMessage());
                 } else {
                     socketIOClient.joinRoom(String.valueOf(data.id()));
-                    ackSender.sendAckData(ResponseState.JOIN_ROOM_SUCCESSFULLY.getCode(),ResponseState.JOIN_ROOM_SUCCESSFULLY.getMessage(),roomAndPlayerMV, playerMVs);
+                    ackSender.sendAckData(ResponseState.JOIN_ROOM_SUCCESSFULLY.getCode(), ResponseState.JOIN_ROOM_SUCCESSFULLY.getMessage(), roomAndPlayerMV, playerMVs);
                     for (SocketIOClient client : server.getAllClients()) {
                         if (client.getAllRooms().size() < 2) {
                             client.sendEvent(EventName.UPDATE_ROOM.name(), roomAndPlayerMV.room());
@@ -80,29 +84,44 @@ public class RoomSocketHandler {
     private DataListener<LeaveRoom> leaveRoom(SocketIOServer server) {
         return (socketIOClient, data, ackSender) -> {
             RoomPlayer roomPlayer = roomService.removeRoom(data);
+            if (roomPlayer.isHost()) {
 
-            if(roomPlayer.isHost()){
+                Set<UUID> clientsInRoom = server.getRoomOperations(String.valueOf(data.roomId())).getClients()
+                        .stream()
+                        .map(SocketIOClient::getSessionId)
+                        .collect(Collectors.toSet());
+
                 server.getRoomOperations(String.valueOf(data.roomId())).getClients()
                         .forEach(client -> {
                             client.leaveRoom(String.valueOf(data.roomId()));
-                            client.sendEvent(EventName.LEAVED_ROOM.name(), PlayerMV.convertPlayerMV(roomPlayer.getPlayer(), roomPlayer.isHost()));
+                            client.sendEvent(EventName.DISSOLVE_ROOM.name(), "dissolve room: " + roomPlayer.getRoom().getId());
                         });
 
-                
-
+                for (SocketIOClient client : server.getAllClients()) {
+                    if (!clientsInRoom.contains(client.getSessionId()) && client.getAllRooms().size() < 2) {
+                        client.sendEvent(EventName.REMOVE_ROOM.name(), RoomMV.convertRoomMV(roomPlayer.getRoom(), 0));
+                    }
+                }
             } else {
-                socketIOClient.leaveRoom(String.valueOf(data.roomId()));
-                if(ackSender.isAckRequested()){
+                if (ackSender.isAckRequested()) {
                     ackSender.sendAckData(ResponseState.LEAVE_ROOM_SUCCESSFULLY.getCode(),
                             ResponseState.LEAVE_ROOM_SUCCESSFULLY.getMessage(),
                             PlayerMV.convertPlayerMV(roomPlayer.getPlayer(), roomPlayer.isHost()));
 
+                    int quantityPresent = roomPlayerService.getPlayersInRoom(roomPlayer.getRoom().getId()).size();
                     for (SocketIOClient client : server.getAllClients()) {
-                        if (client.getAllRooms().size() < 2) {
-                            client.sendEvent(EventName.UPDATE_ROOM.name(), RoomMV.convertRoomMV(roomPlayer.getRoom()));
+                        if (client.getAllRooms().size() < 2 && !client.getSessionId().equals(socketIOClient.getSessionId())) {
+                            client.sendEvent(EventName.UPDATE_ROOM.name(), RoomMV.convertRoomMV(roomPlayer.getRoom(), quantityPresent));
                         }
                     }
+
+                    socketIOClient.leaveRoom(String.valueOf(data.roomId()));
+                    server.getRoomOperations(String.valueOf(data.roomId())).getClients()
+                            .forEach(client -> {
+                                client.sendEvent(EventName.LEAVED_ROOM.name(), PlayerMV.convertPlayerMV(roomPlayer.getPlayer(), roomPlayer.isHost()));
+                            });
                 }
+
             }
         };
     }
@@ -110,8 +129,8 @@ public class RoomSocketHandler {
     private DataListener<String> getAllRoom() {
         return (socketIOClient, data, ackSender) -> {
             List<RoomMV> roomMVList = roomService.getAll();
-            if (ackSender.isAckRequested()){
-                ackSender.sendAckData(ResponseState.GET_ALL_ROOM_SUCCESSFULLY.getCode(),roomMVList);
+            if (ackSender.isAckRequested()) {
+                ackSender.sendAckData(ResponseState.GET_ALL_ROOM_SUCCESSFULLY.getCode(), roomMVList);
             }
         };
     }

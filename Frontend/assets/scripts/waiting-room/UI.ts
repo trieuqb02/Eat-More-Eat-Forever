@@ -44,9 +44,8 @@ export class UI extends Component {
       return idNode == roomItem.id;
     });
 
-    node
-      .getChildByName("Quantity")
-      .getComponent(Label).string = `${roomItem.quantityPresent}/${roomItem.maxPlayers}`;
+    console.log(roomItem.quantityPresent, roomItem.maxPlayers)
+    node.getChildByName("Quantity").getComponent(Label).string = `${roomItem.quantityPresent}/${roomItem.maxPlayers}`;
   }
 
   public deleteRoom(id: string): void {

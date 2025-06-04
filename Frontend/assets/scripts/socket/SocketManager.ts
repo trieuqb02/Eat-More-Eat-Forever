@@ -33,4 +33,8 @@ export class SocketManager {
   public on(event: string, callback: (...args: any[]) => void) {
     this.socket?.on(event, callback);
   }
+
+  public off(event: string, callback: (...args: any[]) => void){
+    this.socket?.off(event, callback);
+  }
 }

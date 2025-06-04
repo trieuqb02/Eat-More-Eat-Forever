@@ -55,20 +55,26 @@ public class RoomService implements IRoomService {
                 .build();
 
         roomPlayer = roomPlayerRepository.save(roomPlayer);
-        return new RoomAndPlayerMV(RoomMV.convertRoomMV(roomPlayer.getRoom()), PlayerMV.convertPlayerMV(roomPlayer.getPlayer(),roomPlayer.isHost()));
+
+        return new RoomAndPlayerMV(RoomMV.convertRoomMV(roomPlayer.getRoom(), 1), PlayerMV.convertPlayerMV(roomPlayer.getPlayer(),roomPlayer.isHost()));
     }
 
     @Override
     public List<RoomMV> getAll() {
         List<Room> roomList = roomRepository.findAllByStateIn(List.of(RoomState.WAITING,RoomState.PLAYING));
-        return roomList.stream().map(RoomMV::convertRoomMV).collect(Collectors.toList());
+        return roomList.stream().map(room -> {
+               int quantityPresent = roomPlayerRepository.findAllByRoomAndLeftAtIsNull(room).size();
+               return RoomMV.convertRoomMV(room, quantityPresent);
+        }
+        ).collect(Collectors.toList());
     }
 
     @Override
     public RoomAndPlayerMV updateRoom(JoinRoomVM data) {
 
         Room room = roomRepository.findById(data.id()).orElseThrow();
-        if (!room.getName().equals(data.name()) && room.getPlayers().size() < room.getMaxPlayers()) {
+        int quantityPresent = roomPlayerRepository.findAllByRoomAndLeftAtIsNull(room).size();
+        if (quantityPresent < room.getMaxPlayers()) {
             Player player = new Player();
             player.setName(data.name());
             player.setCurrentRoom(room);
@@ -89,9 +95,7 @@ public class RoomService implements IRoomService {
                     .build();
 
             roomPlayer = roomPlayerRepository.save(roomPlayer);
-            return new RoomAndPlayerMV(RoomMV.convertRoomMV(roomPlayer.getRoom()), PlayerMV.convertPlayerMV(roomPlayer.getPlayer(),roomPlayer.isHost()));
-        } else if (room.getName().equals(data.name())) {
-            return new RoomAndPlayerMV(RoomMV.convertRoomMV(room), PlayerMV.convertPlayerMV(room.getPlayers().iterator().next(),true));
+            return new RoomAndPlayerMV(RoomMV.convertRoomMV(roomPlayer.getRoom(), quantityPresent + 1), PlayerMV.convertPlayerMV(roomPlayer.getPlayer(),roomPlayer.isHost()));
         }
 
         return null;
@@ -100,14 +104,16 @@ public class RoomService implements IRoomService {
     @Override
     public RoomPlayer removeRoom(LeaveRoom leaveRoom) {
         Room room = roomRepository.findById(leaveRoom.roomId()).orElseThrow();
-        room.setState(RoomState.CLOSE);
-
-        room = roomRepository.save(room);
-
         Player player = playerRepository.findById(leaveRoom.playerId()).orElseThrow();
 
         RoomPlayer roomPlayer = roomPlayerRepository.findByRoomAndPlayer(room, player);
         roomPlayer.setLeftAt(LocalDateTime.now());
+
+        if(roomPlayer.isHost()){
+            room.setState(RoomState.CLOSE);
+
+            roomRepository.save(room);
+        }
 
         roomPlayer = roomPlayerRepository.save(roomPlayer);
 

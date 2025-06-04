@@ -8,6 +8,8 @@ public enum EventName {
     JOIN_ROOM,
     LEAVE_ROOM,
     LEAVED_ROOM,
+    REMOVE_ROOM,
+    DISSOLVE_ROOM,
     GET_ALL_ROOM,
     PLAYER_JOINED,
     JOIN_ROOM_FAIL,
