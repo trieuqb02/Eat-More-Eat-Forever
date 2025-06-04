@@ -36,5 +36,7 @@ public class RoomPlayer extends BaseTimeEntity {
 
     private LocalDateTime leftAt;
 
+    private boolean isReady;
+
     private boolean isHost;
 }

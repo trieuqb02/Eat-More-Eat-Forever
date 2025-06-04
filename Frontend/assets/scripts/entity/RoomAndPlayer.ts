@@ -1,4 +1,6 @@
+import { Player } from "./Player";
+
 export interface RoomAndPlayer {
-  roomId: string;
-  PlayerId: string;
+  room: RoomItem
+  player: Player
 }

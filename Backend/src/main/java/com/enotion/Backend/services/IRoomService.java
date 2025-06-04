@@ -1,9 +1,7 @@
 package com.enotion.Backend.services;
 
-import com.enotion.Backend.payload.JoinRoomVM;
-import com.enotion.Backend.payload.RoomAndPlayerMV;
-import com.enotion.Backend.payload.RoomMV;
-import com.enotion.Backend.payload.RoomVM;
+import com.enotion.Backend.entities.RoomPlayer;
+import com.enotion.Backend.payload.*;
 
 import java.util.List;
 
@@ -13,4 +11,6 @@ public interface IRoomService {
     List<RoomMV> getAll();
 
     RoomAndPlayerMV updateRoom(JoinRoomVM data);
+
+    RoomPlayer removeRoom(LeaveRoom leaveRoom);
 }

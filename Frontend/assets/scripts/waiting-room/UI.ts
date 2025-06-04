@@ -46,16 +46,14 @@ export class UI extends Component {
 
     node
       .getChildByName("Quantity")
-      .getComponent(
-        Label
-      ).string = `${roomItem.quantityPresent}/${roomItem.maxPlayers}`;
+      .getComponent(Label).string = `${roomItem.quantityPresent}/${roomItem.maxPlayers}`;
   }
 
   public deleteRoom(id: string): void {
     const nodeArr = this.listRoom.content.children;
 
     const node = nodeArr.find((element) => {
-      const idNode = element.getChildByName("Id").getComponent(Label).string;
+      const idNode = element.getComponent(Room).getId();
       return idNode == id;
     });
 

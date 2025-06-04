@@ -2,12 +2,12 @@
   "ver": "1.1.50",
   "importer": "prefab",
   "imported": true,
-  "uuid": "3d0bace5-21cf-4c5d-8fa0-b9a900254d53",
+  "uuid": "125a8059-8807-4918-a098-bf018599c00b",
   "files": [
     ".json"
   ],
   "subMetas": {},
   "userData": {
-    "syncNodeName": "Room Panel"
+    "syncNodeName": "Player"
   }
 }

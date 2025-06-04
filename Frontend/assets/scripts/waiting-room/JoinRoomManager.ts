@@ -5,6 +5,8 @@ import { UI } from "./UI";
 import { Code } from "../utils/Code";
 import { RoomAndPlayer } from "../entity/RoomAndPlayer";
 import { SceneName } from "../utils/SceneName";
+import { DataManager } from "../DataManager";
+import { Player } from "../entity/Player";
 const { ccclass, property } = _decorator;
 
 @ccclass("JoinRoomManager")
@@ -16,6 +18,8 @@ export class JoinRoomManager extends Component {
   private ui: UI = null;
 
   private socketManager = SocketManager.getInstance();
+
+  private dataManager = DataManager.getInstance();
 
   private onComfirm(): void {
     if (!this.nameEditBox.string) return;
@@ -32,13 +36,13 @@ export class JoinRoomManager extends Component {
     this.node.active = false;
   }
 
-  reieveResponseJoinRoom(code: number, data: RoomAndPlayer | string) {
+  reieveResponseJoinRoom(code: number, message: string, roomAndPlayer: RoomAndPlayer, playes: Player[]) {
     if (code == Code.SUCCESS) {
-     director.loadScene(SceneName.ROOM);
+      this.dataManager.setRoomAndPlayer(roomAndPlayer);
+      this.dataManager.setPlayersInRoom(playes);
+      director.loadScene(SceneName.ROOM);
     } else {
-      if (typeof data === "string") {
-        this.ui.assignMessagePanel(data);
-      }
+      this.ui.assignMessagePanel(message);
     }
   }
 

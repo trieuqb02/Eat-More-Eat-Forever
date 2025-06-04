@@ -13,6 +13,7 @@ import { UI } from "./UI";
 import { Code } from "../utils/Code";
 import { RoomAndPlayer } from "../entity/RoomAndPlayer";
 import { SceneName } from "../utils/SceneName";
+import { DataManager } from "../DataManager";
 const { ccclass, property } = _decorator;
 
 @ccclass("CreateRommManager")
@@ -35,6 +36,8 @@ export class CreateRommManager extends Component {
   private quantity: number = 0;
 
   private socketManager = SocketManager.getInstance();
+
+  private dataManager = DataManager.getInstance();
 
   protected onLoad(): void {}
 
@@ -73,8 +76,9 @@ export class CreateRommManager extends Component {
     this.node.active = false;
   }
 
-  reieveResponseCreateRoom(code: number, data: RoomAndPlayer | string) {
+  reieveResponseCreateRoom(code: number, data: RoomAndPlayer) {
     if (code == Code.SUCCESS) {
+      this.dataManager.setRoomAndPlayer(data);
       director.loadScene(SceneName.ROOM);
     }
   }

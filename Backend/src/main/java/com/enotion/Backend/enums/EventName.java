@@ -7,8 +7,9 @@ public enum EventName {
     FAST_JOIN_ROOM,
     JOIN_ROOM,
     LEAVE_ROOM,
+    LEAVED_ROOM,
     GET_ALL_ROOM,
-
+    PLAYER_JOINED,
     JOIN_ROOM_FAIL,
 
 
