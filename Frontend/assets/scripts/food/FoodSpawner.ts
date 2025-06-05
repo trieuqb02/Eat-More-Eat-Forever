@@ -30,11 +30,6 @@ export class FoodSpawner extends Component {
             const { type, x, y } = data;
             this.spawnFood(type, new Vec3(x, y, 0));
         });
-
-        // GameManger.Instance.socketManager.emit("FOOD_EATEN", {
-        //     type: EntityType.BLUE,
-        //     playerId: GameManger.Instance.playerId
-        // });
     }
 
     spawnFood(type, position) {

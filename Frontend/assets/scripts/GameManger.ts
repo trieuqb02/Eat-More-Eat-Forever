@@ -56,11 +56,17 @@ export class GameManger extends Component {
         });
 
         this.socketManager.on("FOOD_EATEN", (data) => {
-            const { playerId, type } = data;
+            const { playerId, type, isMapping } = data;
 
             if (playerId === this.playerId && this.snakeCtrl){
-                console.log("own eat");
-                this.snakeCtrl.grow();
+                console.log("Own Snake growww");
+                if (isMapping) {
+                    
+                    this.snakeCtrl.grow();
+                } else {
+                    this.snakeCtrl.shrinkTail(3);
+                    //this.snakeCtrl.addScore(-10);
+                } 
                 return;
             }
 
@@ -70,8 +76,11 @@ export class GameManger extends Component {
 
                 const snakeCtrl = snakeNode.getComponent(SnakeCtrl);
                 if (snakeCtrl) {
-                    console.log("other snake grow");
-                    snakeCtrl.grow();
+                    if (isMapping) {
+                        snakeCtrl.grow();
+                    } else {
+                        snakeCtrl.shrinkTail(3);
+                    }
                 }
             }
         });
@@ -87,7 +96,9 @@ export class GameManger extends Component {
             const { playerId } = data;
             const playerNode = this.otherPlayers[playerId];
             if (playerNode) {
-                playerNode.destroy();
+                const snakeCtrl = playerNode.getComponent(SnakeCtrl);
+                if (snakeCtrl) snakeCtrl.destroySnake(); 
+                else playerNode.destroy(); // ensure destroy
                 delete this.otherPlayers[playerId];
             }
         });
@@ -114,7 +125,6 @@ export class GameManger extends Component {
         this.snakeCtrl = snakeNode.getComponent(SnakeCtrl);
         this.snakeCtrl.enabled = true;
         this.snakeCtrl.playerId = this.playerId;
-        //this.snakeCtrl.snakeType = snakeType;
     }
 
     spawnOtherSnake(id, pos, snakeType) {
@@ -127,7 +137,6 @@ export class GameManger extends Component {
         const ctrl = snakeNode.getComponent(SnakeCtrl);
         ctrl.enabled = false;
         ctrl.playerId = id;
-        //ctrl.snakeType = snakeType;
     }
 }
 
