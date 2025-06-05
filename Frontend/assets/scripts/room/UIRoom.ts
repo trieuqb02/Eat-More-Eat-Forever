@@ -1,4 +1,4 @@
-import { _decorator, Button, Component, instantiate, Node, Prefab } from "cc";
+import { _decorator, Button, Component, HorizontalTextAlignment, instantiate, Label, Node, Prefab, ScrollView } from "cc";
 import { Player } from "../entity/Player";
 import { PlayerInfo } from "./PlayerInfo";
 import { SocketManager } from "../socket/SocketManager";
@@ -12,14 +12,11 @@ export class UIRoom extends Component {
   @property(Prefab)
   private player: Prefab = null;
 
-  @property(Button)
-  private buttonReady: Button = null;
+  @property(ScrollView)
+  private chatList: ScrollView = null;
 
-  private socketManager: SocketManager = SocketManager.getInstance();
-
-  protected onLoad(): void {
-    this.socketManager.on;
-  }
+  @property(Prefab)
+  private chatItem: Prefab = null;
 
   addPlayer(player: Player) {
     const playerNode = instantiate(this.player);
@@ -50,4 +47,22 @@ export class UIRoom extends Component {
 
     node.getComponent(PlayerInfo).changeReady(player.isReady);
   }
+
+  renderMessage(name: string, message: string, position: string){
+    const chatItem = instantiate(this.chatItem);
+
+    let pos;
+    if(position == "L"){
+      pos = HorizontalTextAlignment.LEFT;
+    } else {
+      pos = HorizontalTextAlignment.RIGHT
+    }
+    const label = chatItem.getComponent(Label)
+    label.horizontalAlign = pos;
+    label.string = message;
+    this.chatList.content.addChild(chatItem);
+  }
+
+
+
 }
