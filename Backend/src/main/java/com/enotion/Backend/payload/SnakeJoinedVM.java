@@ -1,4 +1,4 @@
 package com.enotion.Backend.payload;
 
-public record SnakeJoinedVM(String playerId, float x, float y, float rot) { }
+public record SnakeJoinedVM(String playerId, float x, float y, float rot, int snakeType) { }
 

@@ -3,9 +3,9 @@ import { _decorator, Collider2D, Component, Contact2DType, Enum, EventKeyboard, 
 import { Food } from '../food/Food';
 import { SnakeTail } from './SnakeTail';
 import { GameManger } from '../GameManger';
-import { SocketManager } from '../socket/SocketManager';
 import { EventName } from '../utils/EventName';
 import { EntityType } from './EntityType';
+import { CameraFollowing } from '../CameraFollowing';
 const { ccclass, property } = _decorator;
 
 type SnakeStep = {
@@ -15,8 +15,6 @@ type SnakeStep = {
 
 @ccclass('SnakeCtrl')
 export class SnakeCtrl extends Component {
-    //public static Instance: SnakeCtrl = null; // singleton
-
     @property
     moveSpeed: number = 100;
 
@@ -40,9 +38,9 @@ export class SnakeCtrl extends Component {
 
     private score: number = 0;
 
-    onLoad() {
-        //if (SnakeCtrl.Instance === null) SnakeCtrl.Instance = this; // singleton
+    playerId: String = "";
 
+    onLoad() {
         // ref
         this.tailParent = find('Canvas/TailParent');
 
@@ -56,15 +54,14 @@ export class SnakeCtrl extends Component {
     }
 
     onDestroy() {
-        // if (SnakeCtrl.Instance === this) 
-        //     SnakeCtrl.Instance = null;
-
         input.off(Input.EventType.KEY_DOWN, this.onKeyDown, this);
         input.off(Input.EventType.KEY_UP, this.onKeyUp, this);
     }
 
-    protected start(): void {
+    protected start() {
         this.currentAngle = this.node.eulerAngles.z;
+
+        CameraFollowing.Instance.target = this.node;
     }
 
     update(deltaTime: number) {
@@ -74,10 +71,15 @@ export class SnakeCtrl extends Component {
         // move forward
         this.moveForward(deltaTime)
 
+        // save history
+        this.saveHistory(this.node.position.clone(), this.node.rotation.clone());
+    }
+
+    saveHistory(pos, rot){
         // save trans
         this.history.unshift({
-            position: this.node.position.clone(),
-            rotation: this.node.rotation.clone(),
+            position: pos,
+            rotation: rot,
         });
 
         // limit
@@ -87,8 +89,13 @@ export class SnakeCtrl extends Component {
     }
 
     onBeginContact(selfCollider: Collider2D, otherCollider: Collider2D, contact: IPhysics2DContact) {
+        
+        if (this.playerId !== GameManger.Instance.playerId) 
+            return; 
+        console.log("onBeginContact");
         const food = otherCollider.getComponent(Food);
         if (food && food.foodType === this.snakeType) {
+            console.log("Collide food");
             this.addScore(food.scoreAmount);
             // Emit to server food type eaten
             GameManger.Instance.socketManager.emit("FOOD_EATEN", {
@@ -96,7 +103,7 @@ export class SnakeCtrl extends Component {
                 type: food.foodType
             });
             //food.eat(); 
-            this.grow();
+            //this.grow();
         } 
     }
 

@@ -881,10 +881,20 @@
     },
     "_enabled": true,
     "__prefab": null,
-    "snakePrefab": {
-      "__uuid__": "b006d391-30c2-4d13-b7fd-e68dfd8300e6",
-      "__expectedType__": "cc.Prefab"
-    },
+    "snakePrefabs": [
+      {
+        "__uuid__": "b006d391-30c2-4d13-b7fd-e68dfd8300e6",
+        "__expectedType__": "cc.Prefab"
+      },
+      {
+        "__uuid__": "370f47b4-5adb-4787-a506-1593d89434e1",
+        "__expectedType__": "cc.Prefab"
+      },
+      {
+        "__uuid__": "4153f120-0497-4bd5-8ff3-d90dbd7df25c",
+        "__expectedType__": "cc.Prefab"
+      }
+    ],
     "_id": "07iq/IROVGJpGQEp0/KGQw"
   },
   {

@@ -1,8 +1,9 @@
-import { _decorator, Component, Node, Vec2, Vec3 } from 'cc';
+import { _decorator, Component, Node, Vec3 } from 'cc';
 const { ccclass, property } = _decorator;
 
 @ccclass('CameraFollowing')
 export class CameraFollowing extends Component {
+    public static Instance: CameraFollowing = null; // singleton
     @property(Node)
     target: Node;
     @property(Vec3)
@@ -13,6 +14,14 @@ export class CameraFollowing extends Component {
 
     @property
     private speed: number = 5;  
+
+    protected onLoad(): void {
+        if (CameraFollowing.Instance === null) CameraFollowing.Instance = this; // singleton
+    }
+    onDestroy() {
+        if (CameraFollowing.Instance === this) 
+            CameraFollowing.Instance = null;
+    }
 
     protected update(dt) {
         if (!this.target) return;

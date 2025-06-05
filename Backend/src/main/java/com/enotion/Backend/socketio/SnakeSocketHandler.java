@@ -8,17 +8,24 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class SnakeSocketHandler {
     Map<String, SnakeJoinedVM> activePlayers = new ConcurrentHashMap<>();
+    Map<Integer, Boolean> spawnedFoods = new ConcurrentHashMap<>();
+    Map<Integer, FoodMV> activeFoods = new ConcurrentHashMap<>();
 
     public void registerHandlers(SocketIOServer server) {
         // event, type data receive, callback
@@ -32,6 +39,7 @@ public class SnakeSocketHandler {
         return (client, data, ackSender) -> {
             String playerId = data.playerId();
             activePlayers.remove(playerId);
+            //snakeHistories.remove(playerId);
             server.getBroadcastOperations().sendEvent("PLAYER_QUIT", data);
         };
     }
@@ -39,21 +47,26 @@ public class SnakeSocketHandler {
     private DataListener<FoodMV> handleFoodEaten(SocketIOServer server) {
         return (client, data, ackSender) -> {
             int type = data.type();
+            String id = data.playerId();
             System.out.println("Spawn food in server");
 
             server.getBroadcastOperations().sendEvent("FOOD_EATEN", data);
-
             // remove food
+            activeFoods.remove(type);
             server.getBroadcastOperations().sendEvent("FOOD_REMOVED", type);
-
+            spawnedFoods.put(type, false);
             // Respawn after 0.5s
             ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
             scheduler.schedule(() -> {
-                float x = (float)(Math.random() * 600 - 300);
-                float y = (float)(Math.random() * 400 - 200);
-                FoodMV newFood = new FoodMV(type, x, y);
-                server.getBroadcastOperations().sendEvent("SPAWN_FOOD", newFood);
-            }, 500, TimeUnit.MILLISECONDS);
+                if(!spawnedFoods.getOrDefault(type, false)){
+                    float x = (float)(Math.random() * 600 - 300);
+                    float y = (float)(Math.random() * 400 - 200);
+                    FoodMV newFood = new FoodMV(id, type, x, y);
+                    server.getBroadcastOperations().sendEvent("SPAWN_FOOD", newFood);
+                    spawnedFoods.put(type, true);
+                    activeFoods.put(type, newFood);
+                }
+            }, 1500, TimeUnit.MILLISECONDS);
         };
     }
 
@@ -61,7 +74,6 @@ public class SnakeSocketHandler {
         return (client, data, ackSender) -> {
             // send pos to other clients
             server.getBroadcastOperations().sendEvent(EventName.SNAKE_MOVED.name(), data);
-            //System.out.println("Rot: " + data.rot());
         };
     }
 
@@ -69,10 +81,21 @@ public class SnakeSocketHandler {
         return (client, data, ackSender) -> {
             String playerId = data.playerId();
 
+            List<Integer> availableTypes = List.of(0, 1, 2); // RED, GREEN, BLUE
+            Set<Integer> usedTypes = activePlayers.values().stream()
+                    .map(SnakeJoinedVM::snakeType)
+                    .collect(Collectors.toSet());
+
+            int assignedType = availableTypes.stream()
+                    .filter(type -> !usedTypes.contains(type))
+                    .findFirst()
+                    .orElse(0); // fallback if more than 3 players
+
             SnakeJoinedVM joined = new SnakeJoinedVM(playerId,
                     (float)(Math.random() * 500 - 250),
                     (float)(Math.random() * 500 - 250),
-                    0);
+                    0,
+                    assignedType);
             System.out.println(playerId + " joined");
             // send own client to spawn
             client.sendEvent("PLAYER_CREATED", joined);
@@ -82,11 +105,39 @@ public class SnakeSocketHandler {
                 client.sendEvent("NEW_PLAYER_JOINED", other);
             }
 
+            // send cur food list to other client
+            for (FoodMV food : activeFoods.values()) {
+                client.sendEvent("SPAWN_FOOD", food);
+            }
+
             // save client joined to list
             activePlayers.put(playerId, joined);
 
             // emit others client has new client
-            client.getNamespace().getBroadcastOperations().sendEvent("NEW_PLAYER_JOINED", joined);
+            server.getBroadcastOperations().sendEvent("NEW_PLAYER_JOINED", joined);
+
+            // spawn food
+            // First player -> spawn 3 type food
+            if (activePlayers.size() == 1 && activeFoods.isEmpty()) {
+                System.out.println("Has active player");
+                spawnInitialFoods(server, playerId);
+            }
         };
+    }
+
+    private void spawnInitialFoods(SocketIOServer server, String playerId) {
+        activeFoods.clear();
+        spawnedFoods.clear();
+
+        for (int type = 0; type < 3; type++) {
+            float x = (float) (Math.random() * 1000 - 500);
+            float y = (float) (Math.random() * 1000 - 500);
+
+            FoodMV food = new FoodMV(playerId, type, x, y);
+            activeFoods.put(type, food);
+            spawnedFoods.put(type, true);
+
+            server.getBroadcastOperations().sendEvent("SPAWN_FOOD", food);
+        }
     }
 }

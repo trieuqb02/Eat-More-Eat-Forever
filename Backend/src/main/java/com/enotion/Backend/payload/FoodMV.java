@@ -1,3 +1,3 @@
 package com.enotion.Backend.payload;
 
-public record FoodMV(int type, float x, float y) { }
+public record FoodMV(String playerId, int type, float x, float y) { }
