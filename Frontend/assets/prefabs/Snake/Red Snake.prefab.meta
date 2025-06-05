@@ -2,12 +2,12 @@
   "ver": "1.1.50",
   "importer": "prefab",
   "imported": true,
-  "uuid": "b006d391-30c2-4d13-b7fd-e68dfd8300e6",
+  "uuid": "4153f120-0497-4bd5-8ff3-d90dbd7df25c",
   "files": [
     ".json"
   ],
   "subMetas": {},
   "userData": {
-    "syncNodeName": "Snake"
+    "syncNodeName": "Red Snake"
   }
 }

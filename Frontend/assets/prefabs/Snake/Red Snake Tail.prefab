@@ -1,7 +1,7 @@
 [
   {
     "__type__": "cc.Prefab",
-    "_name": "Snake Tail",
+    "_name": "Red Snake Tail",
     "_objFlags": 0,
     "__editorExtras__": {},
     "_native": "",
@@ -13,7 +13,7 @@
   },
   {
     "__type__": "cc.Node",
-    "_name": "Snake Tail",
+    "_name": "Red Snake Tail",
     "_objFlags": 0,
     "__editorExtras__": {},
     "_parent": null,
@@ -107,9 +107,9 @@
     "_dstBlendFactor": 4,
     "_color": {
       "__type__": "cc.Color",
-      "r": 126,
-      "g": 186,
-      "b": 233,
+      "r": 233,
+      "g": 126,
+      "b": 126,
       "a": 255
     },
     "_spriteFrame": {
@@ -147,8 +147,8 @@
     "__prefab": {
       "__id__": 7
     },
-    "head": null,
     "followDelay": 10,
+    "speed": 10,
     "_id": ""
   },
   {

@@ -1,6 +1,6 @@
 import { _decorator, Component, Enum } from 'cc';
-import { EntityType } from '../snake/SnakeCtrl';
 import { FoodSpawner } from './FoodSpawner';
+import { EntityType } from '../snake/EntityType';
 const { ccclass, property } = _decorator;
 
 @ccclass('Food')
@@ -19,7 +19,7 @@ export class Food extends Component {
         this.scheduleOnce(()=>{
             this.node.destroy();
         })
-        FoodSpawner.Instance.onFoodEat(this.foodType);
+        //FoodSpawner.Instance.onFoodEat(this.foodType);
     }
 }
 

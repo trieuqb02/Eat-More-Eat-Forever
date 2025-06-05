@@ -12,8 +12,11 @@ export class SnakeTail extends Component {
     @property
     private speed: number = 10;
 
+    snakeCtrl: SnakeCtrl;
+
     update(deltaTime: number) {
-        const history = SnakeCtrl.Instance.getHistory();
+        if (!this.snakeCtrl) return;
+        const history = this.snakeCtrl.getHistory();
         if (history.length > this.followDelay) {
             const step = history[this.followDelay];
 

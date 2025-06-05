@@ -1,5 +1,6 @@
 import { _decorator, Component, instantiate, Node, Prefab, Vec3 } from 'cc';
-import { EntityType } from '../snake/SnakeCtrl';
+import { EntityType } from '../snake/EntityType';
+import { GameManger } from '../GameManger';
 const { ccclass, property } = _decorator;
 
 @ccclass('FoodSpawner')
@@ -13,37 +14,40 @@ export class FoodSpawner extends Component {
 
     onLoad() {
         FoodSpawner.Instance = this;
-        this.spawnAllFoods();
     }
 
-    spawnAllFoods() {
-        for (let i = 0; i < 3; i++) {
-            this.spawnFood(i as EntityType);
-        }
+    protected start() {
+        GameManger.Instance.socketManager.on("FOOD_REMOVED", (type: number) => {
+            const foodNode = this.activeFoods.get(type);
+            if (foodNode) {
+                console.log("food remove");
+                foodNode.destroy();
+                this.activeFoods.delete(type);
+            }
+        });
+        // socket
+        GameManger.Instance.socketManager.on("SPAWN_FOOD", (data) => {
+            const { type, x, y } = data;
+            this.spawnFood(type, new Vec3(x, y, 0));
+        });
+
+        // GameManger.Instance.socketManager.emit("FOOD_EATEN", {
+        //     type: EntityType.BLUE,
+        //     playerId: GameManger.Instance.playerId
+        // });
     }
 
-    spawnFood(type) {
-        if (this.activeFoods.has(type)) return; // exist
+    spawnFood(type, position) {
+        if (this.activeFoods.has(type)) return;
 
         const prefab = this.foodPrefabs[type];
         if (!prefab) return;
 
         const food = instantiate(prefab);
         this.node.addChild(food);
-
-        const randomPos = new Vec3(
-            Math.random() * 600 - 300,
-            Math.random() * 400 - 200,
-            0
-        );
-        food.setPosition(randomPos);
+        food.setPosition(position);
 
         this.activeFoods.set(type, food);
-    }
-
-    onFoodEat(type) {
-        this.activeFoods.delete(type);
-        this.scheduleOnce(() => this.spawnFood(type), 0.5);
     }
 }
 

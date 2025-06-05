@@ -1,7 +1,7 @@
 [
   {
     "__type__": "cc.Prefab",
-    "_name": "Snake",
+    "_name": "Red Snake",
     "_objFlags": 0,
     "__editorExtras__": {},
     "_native": "",
@@ -13,7 +13,7 @@
   },
   {
     "__type__": "cc.Node",
-    "_name": "Snake",
+    "_name": "Red Snake",
     "_objFlags": 0,
     "__editorExtras__": {},
     "_parent": null,
@@ -253,9 +253,9 @@
     "_dstBlendFactor": 4,
     "_color": {
       "__type__": "cc.Color",
-      "r": 86,
-      "g": 167,
-      "b": 231,
+      "r": 231,
+      "g": 86,
+      "b": 86,
       "a": 255
     },
     "_spriteFrame": {
@@ -289,15 +289,15 @@
     "node": {
       "__id__": 1
     },
-    "_enabled": true,
+    "_enabled": false,
     "__prefab": {
       "__id__": 13
     },
     "moveSpeed": 100,
     "steerSpeed": 100,
-    "snakeType": 2,
+    "snakeType": 0,
     "tailPrefab": {
-      "__uuid__": "5c5bcb48-b54c-4f2d-96c8-b7804bc65733",
+      "__uuid__": "ef575edd-6610-4a05-8821-bcd868dab130",
       "__expectedType__": "cc.Prefab"
     },
     "tailParent": null,
@@ -385,6 +385,7 @@
       "__id__": 0
     },
     "fileId": "56jchFwahLF7WzBPLVRx+S",
+    "instance": null,
     "targetOverrides": null
   }
 ]
