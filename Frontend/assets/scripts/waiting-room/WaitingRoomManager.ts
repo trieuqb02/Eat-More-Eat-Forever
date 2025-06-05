@@ -1,4 +1,4 @@
-import { _decorator, Component, find, Node } from "cc";
+import { _decorator, Component, find, instantiate, Node, Prefab, ScrollView } from "cc";
 import { UI } from "./UI";
 import { SocketManager } from "../socket/SocketManager";
 import { EventName } from "../utils/EventName";
@@ -12,15 +12,10 @@ export class WaitingRoomManager extends Component {
   @property(UI)
   private ui: UI;
 
-  private socketMamager: SocketManager = SocketManager.getInstance();
+  private socketManager: SocketManager = SocketManager.getInstance();
 
   protected onLoad(): void {
-    console.log(">>> WaitingRoomManager onLoad called", this.ui);
-
-    this.socketMamager.emit(EventName.GET_ALL_ROOM,"get all room",this.renderUI.bind(this));
-    this.socketMamager.on(EventName.NEW_ROOM, this.addRoomItem.bind(this));
-    this.socketMamager.on(EventName.UPDATE_ROOM,this.updateRoomItem.bind(this));
-    this.socketMamager.on(EventName.REMOVE_ROOM,this.removeRoomItem.bind(this));
+    this.socketManager.emit(EventName.GET_ALL_ROOM,"get all room",this.renderUI.bind(this));
 
     this.node.on(EventType.EVENT_CLICK_SELECT_ROOM, (event: MyEvent) => {
       this.ui.heighlightRoom(event.detail);
@@ -39,19 +34,7 @@ export class WaitingRoomManager extends Component {
     }
   }
 
-  addRoomItem(data: RoomItem): void {
-    console.log(this.ui);
-    this.ui.addRoomItem(data);
+  refreshWaitingRoom(){
+    this.socketManager.emit(EventName.GET_ALL_ROOM,"get all room",this.renderUI.bind(this));
   }
-
-  updateRoomItem(data: RoomItem): void {
-    console.log("update");
-    this.ui.updateRoom(data);
-  }
-
-  removeRoomItem(data: RoomItem): void {
-    console.log("remove");
-    this.ui.deleteRoom(data.id);
-  }
-  
 }

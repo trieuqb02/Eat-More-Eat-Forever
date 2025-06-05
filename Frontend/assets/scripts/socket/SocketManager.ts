@@ -5,10 +5,6 @@ export class SocketManager {
 
   private socket: Socket | null = null;
 
-  private constructor() {
-    this.initSocket();
-  }
-
   public static getInstance(): SocketManager {
     if (!this._instance) {
       this._instance = new SocketManager();
@@ -16,14 +12,27 @@ export class SocketManager {
     return this._instance;
   }
 
-  private initSocket() {
+  public initSocket() {
     if (this.socket) return;
 
-    this.socket = (window as any).io("http://localhost:3000");
+    this.socket = (window as any).io("http://localhost:3000",{
+      reconnection: true,          
+      reconnectionAttempts: 5,     
+      reconnectionDelay: 1000,     
+    });
 
     this.socket.on("connect", () => {
       console.log("Socket connected:", this.socket?.id);
     });
+  }
+
+  public disconnect() {
+    if (this.socket) {
+      this.socket.removeAllListeners(); 
+      this.socket.disconnect();         
+      this.socket = null;              
+      console.log("Socket disconnected");
+    }
   }
 
   public emit(event: string, data: any, callback?: (...args: any[]) => void) {

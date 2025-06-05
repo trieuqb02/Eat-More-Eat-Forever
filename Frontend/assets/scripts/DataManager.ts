@@ -31,4 +31,9 @@ export class DataManager {
     return this.players;
   }
 
+  clear(){
+    this.players = [];
+    this.roomAndPlayer = null;
+  }
+
 }

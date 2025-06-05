@@ -1,10 +1,7 @@
-import { _decorator, Component, instantiate, Node, Prefab } from "cc";
+import { _decorator, Button, Component, instantiate, Node, Prefab } from "cc";
 import { Player } from "../entity/Player";
 import { PlayerInfo } from "./PlayerInfo";
-import { DataManager } from "../DataManager";
 import { SocketManager } from "../socket/SocketManager";
-import { EventName } from "../utils/EventName";
-import { Code } from "../utils/Code";
 const { ccclass, property } = _decorator;
 
 @ccclass("UIRoom")
@@ -15,7 +12,8 @@ export class UIRoom extends Component {
   @property(Prefab)
   private player: Prefab = null;
 
-  private dataManager: DataManager = DataManager.getInstance();
+  @property(Button)
+  private buttonReady: Button = null;
 
   private socketManager: SocketManager = SocketManager.getInstance();
 
@@ -42,5 +40,14 @@ export class UIRoom extends Component {
     this.room.removeChild(node);
   }
 
-  updatePlayer() {}
+  updatePlayer(player: Player) {
+    const nodeArr = this.room.children;
+
+    const node = nodeArr.find((element) => {
+      const idNode = element.getComponent(PlayerInfo).getId();
+      return idNode == player.id;
+    });
+
+    node.getComponent(PlayerInfo).changeReady(player.isReady);
+  }
 }

@@ -12,5 +12,5 @@ public interface IRoomService {
 
     RoomAndPlayerMV updateRoom(JoinRoomVM data);
 
-    RoomPlayer removeRoom(LeaveRoom leaveRoom);
+    RoomPlayer removeRoom(RoomAndPlayerVM leaveRoom);
 }

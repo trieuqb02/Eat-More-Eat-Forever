@@ -9,6 +9,7 @@ import {
 } from "cc";
 import { Room } from "./Room";
 import { MessageManager } from "./MessageManager";
+import { WaitingRoomManager } from "./WaitingRoomManager";
 const { ccclass, property } = _decorator;
 
 @ccclass("UI")
@@ -36,29 +37,6 @@ export class UI extends Component {
     this.listRoom.content.addChild(room);
   }
 
-  public updateRoom(roomItem: RoomItem): void {
-    const nodeArr = this.listRoom.content.children;
-
-    const node = nodeArr.find((element) => {
-      const idNode = element.getComponent(Room).getId();
-      return idNode == roomItem.id;
-    });
-
-    console.log(roomItem.quantityPresent, roomItem.maxPlayers)
-    node.getChildByName("Quantity").getComponent(Label).string = `${roomItem.quantityPresent}/${roomItem.maxPlayers}`;
-  }
-
-  public deleteRoom(id: string): void {
-    const nodeArr = this.listRoom.content.children;
-
-    const node = nodeArr.find((element) => {
-      const idNode = element.getComponent(Room).getId();
-      return idNode == id;
-    });
-
-    this.listRoom.content.removeChild(node);
-  }
-
   public heighlightRoom(id: string) {
     const arr = this.listRoom.content.children;
     arr.forEach((element) => {
@@ -82,5 +60,10 @@ export class UI extends Component {
   public assignMessagePanel(message: string) {
     this.messagePanel.active = true;
     this.messagePanel.getComponent(MessageManager).showMessage(message);
+  }
+
+  public refreshWaitingRoom(){
+    this.listRoom.content.removeAllChildren();
+    this.listRoom.getComponent(WaitingRoomManager).refreshWaitingRoom();
   }
 }

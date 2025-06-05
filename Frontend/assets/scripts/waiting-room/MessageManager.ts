@@ -1,6 +1,4 @@
-import { _decorator, Component, Label, Node, UI } from "cc";
-import { SocketManager } from "../socket/SocketManager";
-import { EventName } from "../utils/EventName";
+import { _decorator, Component, Label } from "cc";
 const { ccclass, property } = _decorator;
 
 @ccclass("MessageManager")

@@ -8,16 +8,10 @@ export class ActionBarManager extends Component {
   @property(UI)
   ui: UI = null;
 
-  start() {}
-
   update(deltaTime: number) {}
 
   onClickCreateRoomPanel() {
     this.ui.showAndHideCreateRoomPanel();
-  }
-
-  onClickFastJoin() {
-    // handle fast join
   }
 
   onClickJoinRoom() {

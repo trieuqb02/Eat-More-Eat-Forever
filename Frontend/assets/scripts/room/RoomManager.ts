@@ -15,22 +15,21 @@ export class RoomManager extends Component {
 
   private dataManager: DataManager = DataManager.getInstance();
 
-  private socketManager: SocketManager = SocketManager.getInstance();
+  private socketManager: SocketManager =  SocketManager.getInstance();
+
+  private onJoinRoom = this.playerJoinRoom.bind(this);
+  private onLeaveRoom = this.playerLeaveRoom.bind(this);
+  private onDissolveRoom = this.dissolveRoom.bind(this);
+  private onStartedGame = this.startedGame.bind(this);
+  private onChangeReady = this.changeReady.bind(this);
 
   protected onLoad(): void {
     this.renderPlayersInRoom();
-    this.socketManager.on(
-      EventName.PLAYER_JOINED,
-      this.playerJoinRoom.bind(this)
-    );
-    this.socketManager.on(
-      EventName.LEAVED_ROOM,
-      this.playerLeaveRoom.bind(this)
-    );
-    this.socketManager.on(
-      EventName.DISSOLVE_ROOM,
-      this.dissolveRoom.bind(this)
-    );
+    this.socketManager.on(EventName.PLAYER_JOINED, this.onJoinRoom);
+    this.socketManager.on(EventName.LEAVED_ROOM,this.onLeaveRoom);
+    this.socketManager.on(EventName.DISSOLVE_ROOM,this.onDissolveRoom);
+    this.socketManager.on(EventName.STARTED_GAME,this.onStartedGame);
+    this.socketManager.on(EventName.CHANGE_READY,this.onChangeReady);
   }
 
   renderPlayersInRoom(): void {
@@ -46,20 +45,42 @@ export class RoomManager extends Component {
   }
 
   playerJoinRoom(player: Player): void {
+    const arr = this.dataManager.getPlayersInRoom();
+    arr.push(player);
+    this.dataManager.setPlayersInRoom(arr);
     this.ui.addPlayer(player);
   }
 
   playerLeaveRoom(player: Player): void {
+    let arr = this.dataManager.getPlayersInRoom();
+    
+    arr = arr.filter(ele => ele.id != player.id);
+
+    this.dataManager.setPlayersInRoom(arr);
+
     this.ui.removePlayer(player);
   }
 
   dissolveRoom(message: string): void {
+    this.dataManager.clear();
     director.preloadScene(SceneName.WAITING_ROOM, () => {
       director.loadScene(SceneName.WAITING_ROOM);
     });
   }
 
-  onClickReadyOrStart() {}
+  changeReady(player: Player){
+    this.ui.updatePlayer(player);
+  }
+
+  onClickCancelOrReadyOrStart() {
+    const roomAndPlayer = this.dataManager.getRoomAndPlayer();
+    
+    this.socketManager.emit(EventName.START_GAME,{
+      roomId: roomAndPlayer.room.id,
+      playerId: roomAndPlayer.player.id,
+      isHost: roomAndPlayer.player.isHost,
+    },this.startGame.bind(this));
+  }
 
   onClickLeaveRoom() {
     const roomAndPlayer = this.dataManager.getRoomAndPlayer();
@@ -73,11 +94,31 @@ export class RoomManager extends Component {
     );
   }
 
+  startedGame(start: boolean){
+    if(start){
+      console.log("load scene game play");
+    }
+  }
+
+  startGame(code: number, message: string, player: Player){
+    if (code == Code.SUCCESS) {
+      this.ui.updatePlayer(player);
+    }
+  }
+
   leaveRoom(code: number, message: string, player: Player) {
     if (code == Code.SUCCESS) {
       director.preloadScene(SceneName.WAITING_ROOM, () => {
         director.loadScene(SceneName.WAITING_ROOM);
       });
     }
+  }
+
+  protected onDestroy(): void {
+    this.socketManager.off(EventName.PLAYER_JOINED, this.onJoinRoom);
+    this.socketManager.off(EventName.LEAVED_ROOM, this.onLeaveRoom);
+    this.socketManager.off(EventName.DISSOLVE_ROOM, this.onDissolveRoom);
+    this.socketManager.off(EventName.STARTED_GAME, this.onStartedGame);
+    this.socketManager.off(EventName.CHANGE_READY, this.onChangeReady);
   }
 }

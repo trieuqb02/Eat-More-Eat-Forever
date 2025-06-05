@@ -56,7 +56,8 @@ public class RoomService implements IRoomService {
 
         roomPlayer = roomPlayerRepository.save(roomPlayer);
 
-        return new RoomAndPlayerMV(RoomMV.convertRoomMV(roomPlayer.getRoom(), 1), PlayerMV.convertPlayerMV(roomPlayer.getPlayer(),roomPlayer.isHost()));
+        return new RoomAndPlayerMV(RoomMV.convertRoomMV(roomPlayer.getRoom(), 1),
+                PlayerMV.convertPlayerMV(roomPlayer.getPlayer(),roomPlayer.isHost(),roomPlayer.isReady()));
     }
 
     @Override
@@ -73,7 +74,16 @@ public class RoomService implements IRoomService {
     public RoomAndPlayerMV updateRoom(JoinRoomVM data) {
 
         Room room = roomRepository.findById(data.id()).orElseThrow();
-        int quantityPresent = roomPlayerRepository.findAllByRoomAndLeftAtIsNull(room).size();
+
+        List<RoomPlayer> list = roomPlayerRepository.findAllByRoomAndLeftAtIsNull(room);
+
+        for(RoomPlayer roomPlayer : list){
+            if(roomPlayer.isHost() && roomPlayer.isReady()){
+                return null;
+            }
+        }
+
+        int quantityPresent = list.size();
         if (quantityPresent < room.getMaxPlayers()) {
             Player player = new Player();
             player.setName(data.name());
@@ -95,14 +105,15 @@ public class RoomService implements IRoomService {
                     .build();
 
             roomPlayer = roomPlayerRepository.save(roomPlayer);
-            return new RoomAndPlayerMV(RoomMV.convertRoomMV(roomPlayer.getRoom(), quantityPresent + 1), PlayerMV.convertPlayerMV(roomPlayer.getPlayer(),roomPlayer.isHost()));
+            return new RoomAndPlayerMV(RoomMV.convertRoomMV(roomPlayer.getRoom(), quantityPresent + 1),
+                    PlayerMV.convertPlayerMV(roomPlayer.getPlayer(),roomPlayer.isHost(), roomPlayer.isReady()));
         }
 
         return null;
     }
 
     @Override
-    public RoomPlayer removeRoom(LeaveRoom leaveRoom) {
+    public RoomPlayer removeRoom(RoomAndPlayerVM leaveRoom) {
         Room room = roomRepository.findById(leaveRoom.roomId()).orElseThrow();
         Player player = playerRepository.findById(leaveRoom.playerId()).orElseThrow();
 
