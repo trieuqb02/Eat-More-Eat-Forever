@@ -30,7 +30,6 @@ export class ChatMananger extends Component {
             return;
         }
 
-        console.log("Send Message")
         const roomAndPlayer = this.dataManager.getRoomAndPlayer()
         this.socketManager.emit(EventName.SEND_MESSAGE, {
             message: message,
@@ -42,15 +41,12 @@ export class ChatMananger extends Component {
         this.inputMessage.string = "";
     }
 
-    renderMessage(message: string){
-        console.log("Receive", message, 1)
-        const roomAndPlayer = this.dataManager.getRoomAndPlayer()
-        this.ui.renderMessage(roomAndPlayer.player.name,message,"L")
+    renderMessage(message: string, time: string){
+        this.ui.renderMessage("I",message, time,"L")
     }
 
-    receiveMessage(message: string, name:string):void{
-        console.log("Receive ", message)
-        this.ui.renderMessage(name,message,"R")
+    receiveMessage(message: string, name:string, time: string):void{
+        this.ui.renderMessage(name,message,time,"R")
     }
 
     protected onDestroy(): void {

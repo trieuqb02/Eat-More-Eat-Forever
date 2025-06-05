@@ -9,6 +9,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+
 @Component
 @RequiredArgsConstructor
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
@@ -20,14 +24,16 @@ public class RoomChatSocketHandler {
 
     private DataListener<MessageVM> sendMessage(SocketIOServer server) {
         return (socketIOClient, data, ackSender) -> {
+            LocalTime now = LocalTime.now();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("hh:mm:ss a");
+            String formattedTime = now.format(formatter);
             if(ackSender.isAckRequested()){
-                ackSender.sendAckData(data.message());
+                ackSender.sendAckData(data.message(), formattedTime);
             }
-            System.out.println(data);
             server.getRoomOperations(String.valueOf(data.roomId())).getClients().stream()
                     .filter(client -> !client.getSessionId().equals(socketIOClient.getSessionId()))
                     .forEach(client -> {
-                        client.sendEvent(EventName.RECEIVE_MESSAGE.name(), data.message(), data.player().name());
+                        client.sendEvent(EventName.RECEIVE_MESSAGE.name(), data.message(), data.player().name(), formattedTime);
                     });
         };
     }
