@@ -1,7 +1,8 @@
 package com.enotion.Backend.services;
 
 import com.corundumstudio.socketio.SocketIOServer;
-import com.corundumstudio.socketio.listener.DataListener;
+import com.corundumstudio.socketio.listener.ConnectListener;
+import com.corundumstudio.socketio.listener.DisconnectListener;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import org.springframework.stereotype.Component;
@@ -17,20 +18,23 @@ public class SocketIOService {
 
     @PostConstruct
     public void startSocketServer() {
-        server.addConnectListener(client -> {
-            System.out.println("Client connected: " + client.getSessionId());
-        });
+        server.addConnectListener(onConnected());
 
-        server.addDisconnectListener(client -> {
-            System.out.println("Client disconnected: " + client.getSessionId());
-        });
-
-        server.addEventListener("chat", String.class, (client, data, ackSender) -> {
-            System.out.println("Received: " + data);
-            server.getBroadcastOperations().sendEvent("chat", data);
-        });
+        server.addDisconnectListener(onDisconnected());
 
         server.start();
+    }
+
+    private ConnectListener onConnected() {
+        return (client) -> {
+            System.out.println("Socket ID " + client.getSessionId().toString() + " connected to socket");
+        };
+    }
+
+    private DisconnectListener onDisconnected() {
+        return client -> {
+            System.out.println("Socket ID " + client.getSessionId().toString() + " disconnected from socket");
+        };
     }
 
     @PreDestroy
