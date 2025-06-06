@@ -10,7 +10,7 @@ const { ccclass, property } = _decorator;
 @ccclass("WaitingRoomManager")
 export class WaitingRoomManager extends Component {
   @property(UI)
-  private ui: UI;
+  private ui: UI = null;
 
   private socketManager: SocketManager = SocketManager.getInstance();
 

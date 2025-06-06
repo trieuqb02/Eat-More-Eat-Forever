@@ -12,6 +12,9 @@ public enum EventName {
     STARTED_GAME,
     CHANGE_READY,
 
+    SEND_MESSAGE,
+    RECEIVE_MESSAGE,
+
 
     // snake
     MOVE,

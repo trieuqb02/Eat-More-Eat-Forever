@@ -53,7 +53,9 @@ public class RoomSocketHandler {
                     socketIOClient.joinRoom(String.valueOf(data.id()));
                     ackSender.sendAckData(ResponseState.JOIN_ROOM_SUCCESSFULLY.getCode(), ResponseState.JOIN_ROOM_SUCCESSFULLY.getMessage(), roomAndPlayerMV, playerMVs);
 
-                    server.getRoomOperations(String.valueOf(data.id())).getClients().stream().filter(client -> !client.getSessionId().equals(socketIOClient.getSessionId())).forEach(client -> client.sendEvent(EventName.PLAYER_JOINED.name(), roomAndPlayerMV.player()));
+                    server.getRoomOperations(String.valueOf(data.id())).getClients().stream()
+                            .filter(client -> !client.getSessionId().equals(socketIOClient.getSessionId()))
+                            .forEach(client -> client.sendEvent(EventName.PLAYER_JOINED.name(), roomAndPlayerMV.player()));
                 }
             }
         };
@@ -90,14 +92,14 @@ public class RoomSocketHandler {
 
             } else {
                 if (ackSender.isAckRequested()) {
-                    ackSender.sendAckData(ResponseState.LEAVE_ROOM_SUCCESSFULLY.getCode(), ResponseState.LEAVE_ROOM_SUCCESSFULLY.getMessage(), PlayerMV.convertPlayerMV(roomPlayer.getPlayer(), roomPlayer.isHost(), roomPlayer.isReady()));
+                    ackSender.sendAckData(ResponseState.LEAVE_ROOM_SUCCESSFULLY.getCode(), ResponseState.LEAVE_ROOM_SUCCESSFULLY.getMessage(),
+                            PlayerMV.convertPlayerMV(roomPlayer.getPlayer(), roomPlayer.isHost(), roomPlayer.isReady()));
 
                     socketIOClient.leaveRoom(String.valueOf(data.roomId()));
-                    server.getRoomOperations(String.valueOf(data.roomId())).getClients().forEach(client -> {
-                        client.sendEvent(EventName.LEAVED_ROOM.name(), PlayerMV.convertPlayerMV(roomPlayer.getPlayer(), roomPlayer.isHost(), roomPlayer.isReady()));
+                    server.getRoomOperations(String.valueOf(data.roomId())).getClients()
+                            .forEach(client -> {client.sendEvent(EventName.LEAVED_ROOM.name(), PlayerMV.convertPlayerMV(roomPlayer.getPlayer(), roomPlayer.isHost(), roomPlayer.isReady()));
                     });
                 }
-
             }
         };
     }

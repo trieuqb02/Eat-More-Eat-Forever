@@ -1,7 +1,6 @@
-import { _decorator, Button, Component, instantiate, Node, Prefab } from "cc";
+import { _decorator, Color, Component, HorizontalTextAlignment, instantiate, Label, Layout, Node, Prefab, ScrollView, Sprite } from "cc";
 import { Player } from "../entity/Player";
 import { PlayerInfo } from "./PlayerInfo";
-import { SocketManager } from "../socket/SocketManager";
 const { ccclass, property } = _decorator;
 
 @ccclass("UIRoom")
@@ -12,14 +11,11 @@ export class UIRoom extends Component {
   @property(Prefab)
   private player: Prefab = null;
 
-  @property(Button)
-  private buttonReady: Button = null;
+  @property(ScrollView)
+  private chatList: ScrollView = null;
 
-  private socketManager: SocketManager = SocketManager.getInstance();
-
-  protected onLoad(): void {
-    this.socketManager.on;
-  }
+  @property(Prefab)
+  private chatItem: Prefab = null;
 
   addPlayer(player: Player) {
     const playerNode = instantiate(this.player);
@@ -50,4 +46,30 @@ export class UIRoom extends Component {
 
     node.getComponent(PlayerInfo).changeReady(player.isReady);
   }
+
+  renderMessage(name: string, message: string, time: string,position: string){
+    const chatItem = instantiate(this.chatItem);
+    const layout = chatItem.getComponent(Layout);
+
+    let color;
+    if(position == "L"){
+      color = new Color(241, 240, 240);
+      layout.horizontalDirection = Layout.HorizontalDirection.LEFT_TO_RIGHT
+    } else {
+      color = new Color(220, 248, 198);
+      layout.horizontalDirection = Layout.HorizontalDirection.RIGHT_TO_LEFT
+    }
+    
+    const messagePanel = chatItem.getChildByName("MessagePanel");
+    const bg = messagePanel.getComponent(Sprite);
+    const messageLB = messagePanel.getChildByName("Message").getComponent(Label);
+    const timeLB = messagePanel.getChildByName("Time").getComponent(Label);
+    bg.color = color;
+    messageLB.string = `${name}: ${message}`;
+    timeLB.string = time
+    this.chatList.content.addChild(chatItem);
+  }
+
+
+
 }

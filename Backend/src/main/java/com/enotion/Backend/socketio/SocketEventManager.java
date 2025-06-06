@@ -13,13 +13,16 @@ public class SocketEventManager {
 
     SnakeSocketHandler snakeSocketHandler;
 
-    public SocketEventManager(RoomSocketHandler roomSocketHandler, SnakeSocketHandler snakeSocketHandler) {
+    RoomChatSocketHandler roomChatSocketHandler;
+
+    public SocketEventManager(RoomSocketHandler roomSocketHandler, SnakeSocketHandler snakeSocketHandler, RoomChatSocketHandler roomChatSocketHandler) {
         this.roomSocketHandler = roomSocketHandler;
         this.snakeSocketHandler = snakeSocketHandler;
+        this.roomChatSocketHandler = roomChatSocketHandler;
     }
 
     public void registerAll(SocketIOServer server) {
-
+        roomChatSocketHandler.registerHandlers(server);
         roomSocketHandler.registerHandlers(server);
         snakeSocketHandler.registerHandlers(server);
     }
