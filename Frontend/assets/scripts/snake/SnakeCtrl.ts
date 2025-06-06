@@ -78,6 +78,8 @@ export class SnakeCtrl extends Component {
     onBeginContact(selfCollider: Collider2D, otherCollider: Collider2D, contact: IPhysics2DContact) {
         if (this.playerId !== GameManger.Instance.playerId) 
             return; 
+
+        // eat food
         const food = otherCollider.getComponent(Food);
         if (food) {
             //this.addScore(food.scoreAmount);
@@ -88,8 +90,11 @@ export class SnakeCtrl extends Component {
                 foodType: food.foodType 
             });
         } 
-        const tail = otherCollider.getComponent(SnakeTail); // Component của đuôi
+
+        // collide other snake
+        const tail = otherCollider.getComponent(SnakeTail); 
         if (tail) {
+            console.log("Collide tail");
             if (tail.playerId !== this.playerId) {
                 this.schedule(()=>{
                     this.destroySnake();

@@ -11,18 +11,15 @@ export class GameManger extends Component {
     public static Instance: GameManger = null; // singleton
 
     socketManager = SocketManager.getInstance();
-
     playerId: String;
-
     roomId: String;
+    type: String;
 
     @property({ type: [Prefab] })
     snakePrefabs: Prefab[] = [];
 
     private snakeCtrl: SnakeCtrl = null;
-
     public otherPlayers: Record<string, Node> = {};
-
     private dataManager: DataManager = DataManager.getInstance()
 
     protected onLoad(): void {
@@ -32,6 +29,7 @@ export class GameManger extends Component {
 
         this.playerId = roomAndPlayer.player.id;
         this.roomId = roomAndPlayer.room.id;
+        this.type =  roomAndPlayer.player.type;
 
         this.socketManager.on("PLAYER_CREATED", (data) => {
             const { playerId, x, y, rot, snakeType } = data;
@@ -47,7 +45,6 @@ export class GameManger extends Component {
 
         this.socketManager.on(EventName.SNAKE_MOVED, (data) => {
             const { id, x, y, rot } = data;
-
             if (id === this.playerId) return;
 
             const player = this.otherPlayers[id];
@@ -64,24 +61,19 @@ export class GameManger extends Component {
         });
 
         this.socketManager.on("FOOD_EATEN", (data) => {
-            const { playerId, isMapping } = data;
-
+            const { playerId, isMapping, score } = data;
             if (playerId === this.playerId && this.snakeCtrl){
-                console.log("Own Snake growww");
                 if (isMapping) {
-                    
                     this.snakeCtrl.grow();
                 } else {
                     this.snakeCtrl.shrinkTail(3);
-                    //this.snakeCtrl.addScore(-10);
                 } 
+                this.snakeCtrl.addScore(score);
                 return;
             }
 
             const snakeNode = this.otherPlayers[playerId];
             if (snakeNode) {
-                console.log("other eat");
-
                 const snakeCtrl = snakeNode.getComponent(SnakeCtrl);
                 if (snakeCtrl) {
                     if (isMapping) {
@@ -89,6 +81,7 @@ export class GameManger extends Component {
                     } else {
                         snakeCtrl.shrinkTail(3);
                     }
+                    snakeCtrl.addScore(score);
                 }
             }
         });
@@ -128,16 +121,24 @@ export class GameManger extends Component {
     }
 
     protected start(): void {
-        this.socketManager.emit("JOIN_GAME", { playerId: this.playerId, roomId: this.roomId });
+        this.socketManager.emit("JOIN_GAME", { playerId: this.playerId, roomId: this.roomId, type: this.type});
     }
 
     setScore(score){
         UIManager.Instance.setScore(score);
     }
+    
+    arr: any[] = [ {id: "RED", pos: 0},{id: "BLUE", pos: 1},{id: "GREEN", pos: 2},{id: "YELLOW", pos: 3} ]
 
     spawnSnake(id, pos, snakeType) {
         console.log("Spawn snake");
-        const snakeNode = instantiate(this.snakePrefabs[snakeType]);
+        let type;
+        this.arr.forEach(ele => {
+            if(ele.id == snakeType){
+                type = ele.pos
+            }
+        })
+        const snakeNode = instantiate(this.snakePrefabs[type]);
         snakeNode.setPosition(pos);
         this.node.parent.addChild(snakeNode);
 
@@ -148,7 +149,13 @@ export class GameManger extends Component {
 
     spawnOtherSnake(id, pos, snakeType) {
         console.log("Spawn other snake");
-        const snakeNode = instantiate(this.snakePrefabs[snakeType]);
+        let type;
+        this.arr.forEach(ele => {
+            if(ele.id == snakeType){
+                type = ele.pos
+            }
+        })
+        const snakeNode = instantiate(this.snakePrefabs[type]);
         snakeNode.setPosition(pos);
         this.node.parent.addChild(snakeNode);
         this.otherPlayers[id] = snakeNode;

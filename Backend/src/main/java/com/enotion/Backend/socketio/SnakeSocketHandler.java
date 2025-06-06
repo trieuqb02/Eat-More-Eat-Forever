@@ -9,14 +9,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -32,11 +29,10 @@ public class SnakeSocketHandler {
         server.addEventListener("JOIN_GAME", JoinGameVM.class, handleJoinGame(server));
         server.addEventListener("FOOD_EATEN", FoodMV.class, handleFoodEaten(server));
         server.addEventListener("PLAYER_QUIT", PlayerLeaveVM.class, handlePlayerQuit(server));
-//        server.addEventListener("SNAKE_DIED", PlayerDeathVM.class, (client, data, ackSender) -> {
-//            System.out.println("Player died: " + data.playerId());
-//            server.getBroadcastOperations().sendEvent("SNAKE_DIED", data);
-//        });
-
+        server.addEventListener("SNAKE_DIED", PlayerLeaveVM.class, (client, data, ackSender) -> {
+            System.out.println("Player died: " + data.playerId());
+            server.getBroadcastOperations().sendEvent("SNAKE_DIED", data);
+        });
     }
 
     private DataListener<PlayerLeaveVM> handlePlayerQuit(SocketIOServer server) {
@@ -54,17 +50,13 @@ public class SnakeSocketHandler {
             int snakeType = data.snakeType();
 
             // get snakeType player
-            //int playerSnakeType = getPlayerTypeFromId(id);
             boolean isMapping = (snakeType == foodType);
-            System.out.println("snakeType: " + snakeType);
-            System.out.println("foodType: " + foodType);
-            System.out.println("isMapping: " + isMapping);
 
-            // Tạo FoodEatResult và broadcast
-            FoodEatenMV foodEatenMV = new FoodEatenMV(playerId, foodType, isMapping);
+            int score = isMapping ? 10 : -10;
+            // create food
+            FoodEatenMV foodEatenMV = new FoodEatenMV(playerId, foodType, isMapping, score);
             server.getBroadcastOperations().sendEvent("FOOD_EATEN", foodEatenMV);
 
-            //server.getBroadcastOperations().sendEvent("FOOD_EATEN", data);
             // remove food
             activeFoods.remove(foodType);
             server.getBroadcastOperations().sendEvent("FOOD_REMOVED", foodType);
@@ -95,30 +87,15 @@ public class SnakeSocketHandler {
         return (client, data, ackSender) -> {
             String playerId = data.playerId();
 
-            // select snake type
-            List<Integer> availableTypes = List.of(0, 1, 2); // RED, GREEN, BLUE
-            Set<Integer> usedTypes = activePlayers.values().stream()
-                    .map(SnakeJoinedVM::snakeType)
-                    .collect(Collectors.toSet());
-
-            int assignedType = availableTypes.stream()
-                    .filter(type -> !usedTypes.contains(type))
-                    .findFirst()
-                    .orElse(0); // fallback if more than 3 players
-
-            SnakeJoinedVM joined = new SnakeJoinedVM(playerId,
+            SnakeJoinedVM joined = new SnakeJoinedVM(
+                    playerId,
                     (float)(Math.random() * 500 - 250),
                     (float)(Math.random() * 500 - 250),
                     0,
-                    assignedType);
+                    data.type());
             System.out.println(playerId + " joined");
             // send own client to spawn
             client.sendEvent("PLAYER_CREATED", joined);
-
-            // send to new client current player list
-//            for (SnakeJoinedVM other : activePlayers.values()) {
-//                client.sendEvent("NEW_PLAYER_JOINED", other);
-//            }
 
             // send cur food list to other client
             for (FoodMV food : activeFoods.values()) {
@@ -134,17 +111,11 @@ public class SnakeSocketHandler {
             System.out.println("activePlayers.size(): " + activePlayers.size());
             // spawn food
             // First player -> spawn 3 type food
-            if (activePlayers.size() == 1 && activeFoods.isEmpty()) {
+            if (activeFoods.isEmpty()) {
                 System.out.println("Has active player");
                 spawnInitialFoods(server, playerId);
             }
         };
-    }
-
-    private int getPlayerTypeFromId(String playerId) {
-        SnakeJoinedVM player = activePlayers.get(playerId);
-        if (player != null) return player.snakeType();
-        return -1;
     }
 
     private void spawnInitialFoods(SocketIOServer server, String playerId) {
