@@ -96,6 +96,7 @@ export class RoomManager extends Component {
 
   startedGame(start: boolean){
     if(start){
+      console.log(this.dataManager.getRoomAndPlayer().player)
       console.log("load scene game play");
     }
   }
