@@ -30,7 +30,7 @@ public class LeaderBoardController {
         return ResponseEntity.ok().contentType(MediaType.IMAGE_JPEG).body(imageData);
     }
 
-    @PostMapping(value = "game-over", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PutMapping(value = "game-over", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> saveInfo(
             @RequestPart(name = "image") MultipartFile image,
             @RequestPart(name = "data") GameOverMV gameOverMV) throws IOException {

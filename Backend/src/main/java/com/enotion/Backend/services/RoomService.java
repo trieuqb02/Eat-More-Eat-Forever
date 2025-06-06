@@ -47,7 +47,6 @@ public class RoomService implements IRoomService {
         room = roomRepository.save(room);
 
         RoomPlayer roomPlayer = RoomPlayer.builder()
-                .score(0)
                 .player(player)
                 .isHost(true)
                 .isReady(false)
@@ -109,7 +108,6 @@ public class RoomService implements IRoomService {
                     .orElseThrow(() -> new IllegalStateException("No available snake types"));
 
             RoomPlayer roomPlayer = RoomPlayer.builder()
-                    .score(0)
                     .player(player)
                     .room(room)
                     .isHost(false)
