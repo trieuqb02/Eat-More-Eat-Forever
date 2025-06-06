@@ -51,8 +51,8 @@ public class SnakeSocketHandler {
             // get snakeType player
             //int playerSnakeType = getPlayerTypeFromId(id);
             boolean isMapping = (snakeType == foodType);
-            System.out.println("playerSnakeType: " + snakeType);
-            System.out.println("getPlayerTypeFromId: " + foodType);
+            System.out.println("snakeType: " + snakeType);
+            System.out.println("foodType: " + foodType);
             System.out.println("isMapping: " + isMapping);
 
             // Tạo FoodEatResult và broadcast
@@ -149,6 +149,7 @@ public class SnakeSocketHandler {
             float y = (float) (Math.random() * 1000 - 500);
 
             FoodMV food = new FoodMV(playerId, type, 0, x, y);
+            System.out.println("type: " + type);
             activeFoods.put(type, food);
             spawnedFoods.put(type, true);
 

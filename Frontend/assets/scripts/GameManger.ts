@@ -56,7 +56,7 @@ export class GameManger extends Component {
         });
 
         this.socketManager.on("FOOD_EATEN", (data) => {
-            const { playerId, type, isMapping } = data;
+            const { playerId, isMapping } = data;
 
             if (playerId === this.playerId && this.snakeCtrl){
                 console.log("Own Snake growww");

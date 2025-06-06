@@ -79,12 +79,12 @@ export class SnakeCtrl extends Component {
         if (this.playerId !== GameManger.Instance.playerId) 
             return; 
         const food = otherCollider.getComponent(Food);
-        if (food && food.foodType === this.snakeType) {
-            this.addScore(food.scoreAmount);
+        if (food) {
+            //this.addScore(food.scoreAmount);
             // Emit to server food type eaten
             GameManger.Instance.socketManager.emit("FOOD_EATEN", {
                 playerId: GameManger.Instance.playerId,
-                type: this.snakeType,
+                snakeType: this.snakeType,
                 foodType: food.foodType 
             });
         } 

@@ -27,17 +27,16 @@ export class FoodSpawner extends Component {
         });
         // socket
         GameManger.Instance.socketManager.on("SPAWN_FOOD", (data) => {
-            const { type, x, y } = data;
-            this.spawnFood(type, new Vec3(x, y, 0));
+            const { foodType, x, y } = data;
+            this.spawnFood(foodType, new Vec3(x, y, 0));
         });
     }
 
     spawnFood(type, position) {
+        console.log("type: " + type);
         if (this.activeFoods.has(type)) return;
-
         const prefab = this.foodPrefabs[type];
         if (!prefab) return;
-
         const food = instantiate(prefab);
         this.node.addChild(food);
         food.setPosition(position);
