@@ -6,6 +6,7 @@ import { GameManger } from '../GameManger';
 import { EventName } from '../utils/EventName';
 import { EntityType } from './EntityType';
 import { CameraFollowing } from '../CameraFollowing';
+import { UIManager } from '../UIManager';
 const { ccclass, property } = _decorator;
 
 type SnakeStep = {
@@ -36,7 +37,10 @@ export class SnakeCtrl extends Component {
     tailSpacing: number = 10;
     private tailList: Node[] = [];
 
-    private score: number = 0;
+    private _score: number = 0;
+    get score() {return this._score;}
+    set score(value) {
+        if (value >= 0) this._score = value; }
 
     playerId: String = "";
 
@@ -142,6 +146,7 @@ export class SnakeCtrl extends Component {
 
         const newTail = instantiate(this.tailPrefab);
         this.tailParent.addChild(newTail);
+        newTail.setPosition(this.node.getPosition());
 
         const delay = (this.tailList.length + 1) * this.tailSpacing;
         const tailComp = newTail.getComponent(SnakeTail);
@@ -154,6 +159,7 @@ export class SnakeCtrl extends Component {
     }
 
     destroySnake() {
+        UIManager.Instance.removePlayer(this.playerId);
         this.tailList.forEach(tailNode => {
             tailNode.destroy();
         });

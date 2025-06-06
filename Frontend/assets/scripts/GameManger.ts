@@ -34,6 +34,7 @@ export class GameManger extends Component {
         this.socketManager.on("PLAYER_CREATED", (data) => {
             const { playerId, x, y, rot, snakeType } = data;
             this.spawnSnake(playerId, new Vec3(x, y, 0), snakeType); // own
+            UIManager.Instance.updateScore(playerId, 0);
         });
 
         this.socketManager.on("NEW_PLAYER_JOINED", (data) => {
@@ -41,6 +42,7 @@ export class GameManger extends Component {
             if (playerId === this.playerId) return;
             console.log("New player join");
             this.spawnOtherSnake(playerId, new Vec3(x, y, 0), snakeType); // another
+            UIManager.Instance.updateScore(playerId, 0);
         });
 
         this.socketManager.on(EventName.SNAKE_MOVED, (data) => {
@@ -69,6 +71,7 @@ export class GameManger extends Component {
                     this.snakeCtrl.shrinkTail(3);
                 } 
                 this.snakeCtrl.addScore(score);
+                UIManager.Instance.updateScore(playerId, this.snakeCtrl.score);
                 return;
             }
 
@@ -82,6 +85,7 @@ export class GameManger extends Component {
                         snakeCtrl.shrinkTail(3);
                     }
                     snakeCtrl.addScore(score);
+                    UIManager.Instance.updateScore(playerId, snakeCtrl.score);
                 }
             }
         });
