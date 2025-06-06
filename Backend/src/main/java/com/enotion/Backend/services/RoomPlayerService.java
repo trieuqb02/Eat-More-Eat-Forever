@@ -4,10 +4,7 @@ import com.enotion.Backend.entities.Player;
 import com.enotion.Backend.entities.Room;
 import com.enotion.Backend.entities.RoomPlayer;
 import com.enotion.Backend.enums.RoomState;
-import com.enotion.Backend.payload.PlayerMV;
-import com.enotion.Backend.payload.RoomAndPlayerMV;
-import com.enotion.Backend.payload.RoomAndPlayerVM;
-import com.enotion.Backend.payload.RoomMV;
+import com.enotion.Backend.payload.*;
 import com.enotion.Backend.repositories.PlayerRepository;
 import com.enotion.Backend.repositories.RoomPlayerRepository;
 import com.enotion.Backend.repositories.RoomRepository;
@@ -15,7 +12,9 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -66,5 +65,30 @@ public class RoomPlayerService implements IRoomPlayerService {
         roomPlayer = roomPlayerRepository.save(roomPlayer);
 
         return new RoomAndPlayerMV(RoomMV.convertRoomMV(roomPlayer.getRoom(), quantityPresent), PlayerMV.convertPlayerMV(roomPlayer));
+    }
+
+    @Override
+    public List<LeaderBoardMV> getLeaderBoard() {
+        List<RoomPlayer> list = roomPlayerRepository.findTop10ByScoreNotNullOrderByScoreDesc();
+        return list.stream().map(LeaderBoardMV::converToLeaderBoardMV).toList();
+    }
+
+    @Override
+    public LeaderBoardMV update(GameOverMV gameOverMV, MultipartFile image) throws IOException {
+        Room room = roomRepository.findById(gameOverMV.roomId()).orElseThrow();
+        Player player = playerRepository.findById(gameOverMV.playerId()).orElseThrow();
+
+        RoomPlayer roomPlayer = roomPlayerRepository.findByRoomAndPlayer(room,player);
+        roomPlayer.setScore(gameOverMV.score());
+        roomPlayer.setImage(image.getBytes());
+
+        roomPlayer = roomPlayerRepository.save(roomPlayer);
+        return LeaderBoardMV.converToLeaderBoardMV(roomPlayer);
+    }
+
+    @Override
+    public byte[] getImage(UUID roomPlayerId) {
+        RoomPlayer roomPlayer = roomPlayerRepository.findById(roomPlayerId).orElseThrow();
+        return roomPlayer.getImage();
     }
 }
