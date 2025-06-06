@@ -34,9 +34,7 @@ public class RoomPlayerService implements IRoomPlayerService {
         Room room = roomRepository.findById(roomId).orElseThrow();
         List<RoomPlayer> activePlayers = roomPlayerRepository.findAllByRoomAndLeftAtIsNull(room);
 
-        return activePlayers.stream().map(roomPlayer -> {
-            return PlayerMV.convertPlayerMV(roomPlayer.getPlayer(), roomPlayer.isHost(), roomPlayer.isReady());
-        }).collect(Collectors.toList());
+        return activePlayers.stream().map(PlayerMV::convertPlayerMV).collect(Collectors.toList());
     }
 
     @Override
@@ -60,13 +58,13 @@ public class RoomPlayerService implements IRoomPlayerService {
             }
 
             if(!startGame){
-                return new RoomAndPlayerMV(RoomMV.convertRoomMV(roomPlayer.getRoom(), quantityPresent), PlayerMV.convertPlayerMV(roomPlayer.getPlayer(), roomPlayer.isHost(), roomPlayer.isReady()));
+                return new RoomAndPlayerMV(RoomMV.convertRoomMV(roomPlayer.getRoom(), quantityPresent), PlayerMV.convertPlayerMV(roomPlayer));
             }
         }
 
         roomPlayer.setReady(!roomPlayer.isReady());
         roomPlayer = roomPlayerRepository.save(roomPlayer);
 
-        return new RoomAndPlayerMV(RoomMV.convertRoomMV(roomPlayer.getRoom(), quantityPresent), PlayerMV.convertPlayerMV(roomPlayer.getPlayer(), roomPlayer.isHost(), roomPlayer.isReady()));
+        return new RoomAndPlayerMV(RoomMV.convertRoomMV(roomPlayer.getRoom(), quantityPresent), PlayerMV.convertPlayerMV(roomPlayer));
     }
 }
