@@ -43,4 +43,7 @@ public class RoomPlayer extends BaseTimeEntity {
     private boolean isReady;
 
     private boolean isHost;
+
+    @Lob
+    private byte[] image;
 }
