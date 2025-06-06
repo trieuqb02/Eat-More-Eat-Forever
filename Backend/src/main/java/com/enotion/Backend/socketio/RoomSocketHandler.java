@@ -93,11 +93,11 @@ public class RoomSocketHandler {
             } else {
                 if (ackSender.isAckRequested()) {
                     ackSender.sendAckData(ResponseState.LEAVE_ROOM_SUCCESSFULLY.getCode(), ResponseState.LEAVE_ROOM_SUCCESSFULLY.getMessage(),
-                            PlayerMV.convertPlayerMV(roomPlayer.getPlayer(), roomPlayer.isHost(), roomPlayer.isReady()));
+                            PlayerMV.convertPlayerMV(roomPlayer));
 
                     socketIOClient.leaveRoom(String.valueOf(data.roomId()));
                     server.getRoomOperations(String.valueOf(data.roomId())).getClients()
-                            .forEach(client -> {client.sendEvent(EventName.LEAVED_ROOM.name(), PlayerMV.convertPlayerMV(roomPlayer.getPlayer(), roomPlayer.isHost(), roomPlayer.isReady()));
+                            .forEach(client -> {client.sendEvent(EventName.LEAVED_ROOM.name(), PlayerMV.convertPlayerMV(roomPlayer));
                     });
                 }
             }

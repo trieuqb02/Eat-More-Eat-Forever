@@ -1,5 +1,6 @@
 package com.enotion.Backend.entities;
 
+import com.enotion.Backend.enums.SnakeType;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.DynamicInsert;
@@ -35,6 +36,9 @@ public class RoomPlayer extends BaseTimeEntity {
     private LocalDateTime joinedAt;
 
     private LocalDateTime leftAt;
+
+    @Enumerated(EnumType.STRING)
+    private SnakeType snakeType;
 
     private boolean isReady;
 

@@ -3,4 +3,5 @@ export interface Player {
     name: string,
     isHost: boolean
     isReady: boolean,
+    type: string
 }
