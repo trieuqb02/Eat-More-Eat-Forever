@@ -65,7 +65,7 @@ export class SnakeCtrl extends Component {
     }
 
     update(deltaTime: number) {
-        // steet
+        // steer
         this.steer(deltaTime);
 
         // move forward
@@ -75,6 +75,22 @@ export class SnakeCtrl extends Component {
         this.saveHistory(this.node.position.clone(), this.node.rotation.clone());
     }
 
+    onBeginContact(selfCollider: Collider2D, otherCollider: Collider2D, contact: IPhysics2DContact) {
+        if (this.playerId !== GameManger.Instance.playerId) 
+            return; 
+        const food = otherCollider.getComponent(Food);
+        if (food) {
+            //this.addScore(food.scoreAmount);
+            // Emit to server food type eaten
+            GameManger.Instance.socketManager.emit("FOOD_EATEN", {
+                playerId: GameManger.Instance.playerId,
+                snakeType: this.snakeType,
+                foodType: food.foodType 
+            });
+        } 
+    }
+
+    // ==============> SET ====================
     saveHistory(pos, rot){
         // save trans
         this.history.unshift({
@@ -88,28 +104,18 @@ export class SnakeCtrl extends Component {
         }
     }
 
-    onBeginContact(selfCollider: Collider2D, otherCollider: Collider2D, contact: IPhysics2DContact) {
-        
-        if (this.playerId !== GameManger.Instance.playerId) 
-            return; 
-        console.log("onBeginContact");
-        const food = otherCollider.getComponent(Food);
-        if (food && food.foodType === this.snakeType) {
-            console.log("Collide food");
-            this.addScore(food.scoreAmount);
-            // Emit to server food type eaten
-            GameManger.Instance.socketManager.emit("FOOD_EATEN", {
-                playerId: GameManger.Instance.playerId,
-                type: food.foodType
-            });
-            //food.eat(); 
-            //this.grow();
-        } 
-    }
-
     addScore(amount){
         this.score += amount;
         GameManger.Instance.setScore(this.score);
+    }
+
+    shrinkTail(amount) {
+        for (let i = 0; i < amount && this.tailList.length > 0; i++) {
+            const tailNode = this.tailList.pop();
+            if (tailNode) {
+                tailNode.destroy();
+            }
+        }
     }
 
     grow() {
@@ -127,6 +133,21 @@ export class SnakeCtrl extends Component {
         this.tailList.push(newTail);
     }
 
+    destroySnake() {
+        this.tailList.forEach(tailNode => {
+            tailNode.destroy();
+        });
+        this.tailList = [];
+
+        this.node.destroy();
+    }
+
+    // ==============> GET ====================
+    getHistory(): SnakeStep[] {
+        return this.history;
+    }
+
+    // ==============> MOVE HANDLER ====================
     moveForward(dt){
         const forward = this.node.up;
         const moveDelta = forward.clone().multiplyScalar(this.moveSpeed * dt);
@@ -146,15 +167,17 @@ export class SnakeCtrl extends Component {
         this.node.setRotationFromEuler(0, 0, this.currentAngle);
     }
 
-    getHistory(): SnakeStep[] {
-        return this.history;
-    }
-
+    // ==============> INPUT HANDLER ====================
     onKeyDown(event: EventKeyboard) {
         if (event.keyCode === KeyCode.ARROW_LEFT || event.keyCode === KeyCode.KEY_A) {
             this.steerDirection = 1;
         } else if (event.keyCode === KeyCode.ARROW_RIGHT || event.keyCode === KeyCode.KEY_D) {
             this.steerDirection = -1;
+        }
+
+        // for test
+        if (event.keyCode === KeyCode.KEY_T) {
+            this.steerDirection = 1;
         }
     }
 
