@@ -97,6 +97,7 @@ export class RoomManager extends Component {
   startedGame(start: boolean){
     if(start){
       console.log("load scene game play");
+      director.loadScene(SceneName.MAIN);
     }
   }
 

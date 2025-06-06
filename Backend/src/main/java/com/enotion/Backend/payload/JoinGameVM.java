@@ -1,3 +1,5 @@
 package com.enotion.Backend.payload;
 
-public record JoinGameVM(String playerId) { }
+import java.util.UUID;
+
+public record JoinGameVM(String playerId, UUID roomId) { }

@@ -32,6 +32,11 @@ public class SnakeSocketHandler {
         server.addEventListener("JOIN_GAME", JoinGameVM.class, handleJoinGame(server));
         server.addEventListener("FOOD_EATEN", FoodMV.class, handleFoodEaten(server));
         server.addEventListener("PLAYER_QUIT", PlayerLeaveVM.class, handlePlayerQuit(server));
+//        server.addEventListener("SNAKE_DIED", PlayerDeathVM.class, (client, data, ackSender) -> {
+//            System.out.println("Player died: " + data.playerId());
+//            server.getBroadcastOperations().sendEvent("SNAKE_DIED", data);
+//        });
+
     }
 
     private DataListener<PlayerLeaveVM> handlePlayerQuit(SocketIOServer server) {
@@ -90,6 +95,7 @@ public class SnakeSocketHandler {
         return (client, data, ackSender) -> {
             String playerId = data.playerId();
 
+            // select snake type
             List<Integer> availableTypes = List.of(0, 1, 2); // RED, GREEN, BLUE
             Set<Integer> usedTypes = activePlayers.values().stream()
                     .map(SnakeJoinedVM::snakeType)
@@ -110,9 +116,9 @@ public class SnakeSocketHandler {
             client.sendEvent("PLAYER_CREATED", joined);
 
             // send to new client current player list
-            for (SnakeJoinedVM other : activePlayers.values()) {
-                client.sendEvent("NEW_PLAYER_JOINED", other);
-            }
+//            for (SnakeJoinedVM other : activePlayers.values()) {
+//                client.sendEvent("NEW_PLAYER_JOINED", other);
+//            }
 
             // send cur food list to other client
             for (FoodMV food : activeFoods.values()) {
@@ -123,8 +129,9 @@ public class SnakeSocketHandler {
             activePlayers.put(playerId, joined);
 
             // emit others client has new client
-            server.getBroadcastOperations().sendEvent("NEW_PLAYER_JOINED", joined);
+            server.getRoomOperations(String.valueOf(data.roomId())).sendEvent("NEW_PLAYER_JOINED", joined);
 
+            System.out.println("activePlayers.size(): " + activePlayers.size());
             // spawn food
             // First player -> spawn 3 type food
             if (activePlayers.size() == 1 && activeFoods.isEmpty()) {

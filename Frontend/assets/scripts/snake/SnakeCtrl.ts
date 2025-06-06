@@ -88,6 +88,20 @@ export class SnakeCtrl extends Component {
                 foodType: food.foodType 
             });
         } 
+        const tail = otherCollider.getComponent(SnakeTail); // Component của đuôi
+        if (tail) {
+            if (tail.playerId !== this.playerId) {
+                this.schedule(()=>{
+                    this.destroySnake();
+                }, 0)
+
+                // emit server
+                GameManger.Instance.socketManager.emit("SNAKE_DIED", {
+                    playerId: this.playerId,
+                    killedBy: tail.playerId
+                });
+            }
+        }
     }
 
     // ==============> SET ====================
@@ -127,6 +141,7 @@ export class SnakeCtrl extends Component {
         const delay = (this.tailList.length + 1) * this.tailSpacing;
         const tailComp = newTail.getComponent(SnakeTail);
         if (tailComp) {
+            tailComp.playerId = this.playerId;
             tailComp.followDelay = delay;
             tailComp.snakeCtrl = this;
         }
