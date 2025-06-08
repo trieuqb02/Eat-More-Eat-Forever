@@ -1,4 +1,6 @@
 package com.enotion.Backend.payload;
 
-public record SnakeJoinedVM(String playerId, float x, float y, float rot, int snakeType) { }
+import com.enotion.Backend.enums.SnakeType;
+
+public record SnakeJoinedVM(String playerId, float x, float y, float rot, SnakeType snakeType) { }
 

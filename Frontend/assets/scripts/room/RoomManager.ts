@@ -98,6 +98,11 @@ export class RoomManager extends Component {
     if(start){
       console.log(this.dataManager.getRoomAndPlayer().player)
       console.log("load scene game play");
+      if(this.dataManager.getRoomAndPlayer().player.isHost)
+        this.socketManager.emit("START_GAMEPLAY", {
+            roomId: this.dataManager.getRoomAndPlayer().room.id
+        });
+      director.loadScene(SceneName.MAIN);
     }
   }
 

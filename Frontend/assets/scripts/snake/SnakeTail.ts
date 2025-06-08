@@ -13,6 +13,7 @@ export class SnakeTail extends Component {
     private speed: number = 10;
 
     snakeCtrl: SnakeCtrl;
+    playerId: String = '';
 
     update(deltaTime: number) {
         if (!this.snakeCtrl) return;
