@@ -19,11 +19,11 @@ export class MenuManager extends Component {
 
     clickPlayOnline(){
         this.socketManager.initSocket();
-        director.loadScene(SceneName.WAITING_ROOM)
+        director.loadScene(SceneName.WAITING_ROOM);
     }
 
     clickPlayOffline(){
-
+        director.loadScene(SceneName.PLAY_OFFLINE);
     }
 
     async clickLeaderBoard(){
