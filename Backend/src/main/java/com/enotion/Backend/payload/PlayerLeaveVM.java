@@ -1,3 +1,5 @@
 package com.enotion.Backend.payload;
 
-public record PlayerLeaveVM(String playerId) { }
+import java.util.UUID;
+
+public record PlayerLeaveVM(UUID playerId, UUID roomId) { }

@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -74,21 +75,50 @@ public class RoomPlayerService implements IRoomPlayerService {
     }
 
     @Override
-    public LeaderBoardMV update(GameOverMV gameOverMV, MultipartFile image) throws IOException {
+    public LeaderBoardMV update(GameOverMV gameOverMV) {
         Room room = roomRepository.findById(gameOverMV.roomId()).orElseThrow();
         Player player = playerRepository.findById(gameOverMV.playerId()).orElseThrow();
 
         RoomPlayer roomPlayer = roomPlayerRepository.findByRoomAndPlayer(room,player);
         roomPlayer.setScore(gameOverMV.score());
-        roomPlayer.setImage(image.getBytes());
+
+        if(roomPlayer.isHost()){
+            room.setState(RoomState.CLOSE);
+            roomRepository.save(room);
+        }
+
+        byte[] image = decodeBase64Image(gameOverMV.imageBase64());
+
+        roomPlayer.setImage(image);
 
         roomPlayer = roomPlayerRepository.save(roomPlayer);
         return LeaderBoardMV.converToLeaderBoardMV(roomPlayer);
     }
 
     @Override
+    public RoomAndPlayerMV quitGame(UUID roomId, UUID playerId) {
+        Room room = roomRepository.findById(roomId).orElseThrow();
+        Player player = playerRepository.findById(playerId).orElseThrow();
+        RoomPlayer roomPlayer = roomPlayerRepository.findByRoomAndPlayer(room,player);
+        roomPlayer.setScore(0);
+        roomPlayer = roomPlayerRepository.save(roomPlayer);
+        return new RoomAndPlayerMV(RoomMV.convertRoomMV(roomPlayer.getRoom(),0), PlayerMV.convertPlayerMV(roomPlayer));
+    }
+
+    @Override
     public byte[] getImage(UUID roomPlayerId) {
         RoomPlayer roomPlayer = roomPlayerRepository.findById(roomPlayerId).orElseThrow();
         return roomPlayer.getImage();
+    }
+
+    public static byte[] decodeBase64Image(String imageBase64) {
+
+        if (imageBase64 == null || !imageBase64.contains(",")) {
+            throw new IllegalArgumentException("Invalid base64 image string");
+        }
+
+        String base64Data = imageBase64.split(",")[1];
+
+        return Base64.getDecoder().decode(base64Data);
     }
 }

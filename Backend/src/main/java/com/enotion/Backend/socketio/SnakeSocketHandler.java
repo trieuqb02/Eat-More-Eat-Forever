@@ -4,12 +4,12 @@ import com.corundumstudio.socketio.SocketIOServer;
 import com.corundumstudio.socketio.listener.DataListener;
 import com.enotion.Backend.enums.EventName;
 import com.enotion.Backend.payload.*;
+import com.enotion.Backend.services.RoomPlayerService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -20,11 +20,14 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class SnakeSocketHandler {
+
     Map<String, SnakeJoinedVM> activePlayers = new ConcurrentHashMap<>();
     Map<Integer, Boolean> spawnedFoods = new ConcurrentHashMap<>();
     Map<Integer, FoodMV> activeFoods = new ConcurrentHashMap<>();
     Map<String, ScheduledExecutorService> gameTimers = new ConcurrentHashMap<>();
     Map<String, Integer> roomTimers = new ConcurrentHashMap<>();
+
+    RoomPlayerService roomPlayerService;
 
     public void registerHandlers(SocketIOServer server) {
         // event, type data receive, callback
@@ -33,7 +36,6 @@ public class SnakeSocketHandler {
         server.addEventListener("FOOD_EATEN", FoodMV.class, handleFoodEaten(server));
         server.addEventListener("PLAYER_QUIT", PlayerLeaveVM.class, handlePlayerQuit(server));
         server.addEventListener("SNAKE_DIED", PlayerLeaveVM.class, (client, data, ackSender) -> {
-            System.out.println("Player died: " + data.playerId());
             server.getBroadcastOperations().sendEvent("SNAKE_DIED", data);
         });
         server.addEventListener("START_GAMEPLAY", StartGameVM.class, handleStartGame(server));
@@ -42,7 +44,7 @@ public class SnakeSocketHandler {
     private DataListener<StartGameVM> handleStartGame(SocketIOServer server) {
         return (client, data, ackSender) -> {
             String roomId = data.roomId();
-            int gameTime = 60;
+            int gameTime = 10;
 
             // check had
             if (gameTimers.containsKey(roomId)) return;
@@ -67,7 +69,6 @@ public class SnakeSocketHandler {
                     scheduler.shutdown();
                     gameTimers.remove(roomId);
                     roomTimers.remove(roomId);
-
                     server.getRoomOperations(roomId).sendEvent("GAME_OVER");
                 }
             }, 1, 1, TimeUnit.SECONDS);
@@ -76,9 +77,12 @@ public class SnakeSocketHandler {
 
     private DataListener<PlayerLeaveVM> handlePlayerQuit(SocketIOServer server) {
         return (client, data, ackSender) -> {
-            String playerId = data.playerId();
+            String playerId = String.valueOf(data.playerId());
             activePlayers.remove(playerId);
-            server.getBroadcastOperations().sendEvent("PLAYER_QUIT", data);
+            roomPlayerService.quitGame(data.roomId(), data.playerId());
+
+            client.leaveRoom(String.valueOf(data.roomId()));
+            server.getRoomOperations(String.valueOf(data.roomId())).sendEvent("PLAYER_QUIT", data);
         };
     }
 
@@ -103,9 +107,9 @@ public class SnakeSocketHandler {
             // Respawn after 0.5s
             ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
             scheduler.schedule(() -> {
-                if(!spawnedFoods.getOrDefault(foodType, false)){
-                    float x = (float)(Math.random() * 600 - 300);
-                    float y = (float)(Math.random() * 400 - 200);
+                if (!spawnedFoods.getOrDefault(foodType, false)) {
+                    float x = (float) (Math.random() * 600 - 300);
+                    float y = (float) (Math.random() * 400 - 200);
                     FoodMV newFood = new FoodMV(playerId, foodType, snakeType, x, y);
                     server.getBroadcastOperations().sendEvent("SPAWN_FOOD", newFood);
                     spawnedFoods.put(foodType, true);
@@ -127,11 +131,10 @@ public class SnakeSocketHandler {
             String playerId = data.playerId();
             System.out.println("Join game room ID: " + data.roomId());
 
-
             SnakeJoinedVM joined = new SnakeJoinedVM(
                     playerId,
-                    (float)(Math.random() * 500 - 250),
-                    (float)(Math.random() * 500 - 250),
+                    (float) (Math.random() * 500 - 250),
+                    (float) (Math.random() * 500 - 250),
                     0,
                     data.type());
             System.out.println(playerId + " joined");

@@ -5,7 +5,7 @@ const { ccclass, property } = _decorator;
 export class CameraFollowing extends Component {
     public static Instance: CameraFollowing = null; // singleton
     @property(Node)
-    target: Node;
+    target: Node = null;
     @property(Vec3)
     private offset: Vec3 = new Vec3(5, 5, 0); 
 

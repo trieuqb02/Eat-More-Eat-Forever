@@ -30,14 +30,6 @@ public class LeaderBoardController {
         return ResponseEntity.ok().contentType(MediaType.IMAGE_JPEG).body(imageData);
     }
 
-    @PutMapping(value = "game-over", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> saveInfo(
-            @RequestPart(name = "image") MultipartFile image,
-            @RequestPart(name = "data") GameOverMV gameOverMV) throws IOException {
-        LeaderBoardMV data = roomPlayerService.update(gameOverMV,image);
-        return ResponseEntity.status(HttpStatus.OK).body(data);
-    }
-
     @GetMapping("leader-board")
     public ResponseEntity<?> getLeaderBoard(){
         List<LeaderBoardMV> list = roomPlayerService.getLeaderBoard();

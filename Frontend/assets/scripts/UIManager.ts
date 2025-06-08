@@ -1,5 +1,6 @@
 import { _decorator, Color, Component, Game, instantiate, Label, Node, Prefab, tween, Vec3 } from 'cc';
 import { GameManger } from './GameManger';
+import { UICapture } from './UICapture';
 const { ccclass, property } = _decorator;
 
 @ccclass('UIManager')
@@ -18,6 +19,9 @@ export class UIManager extends Component {
 
     @property(Node)
     gameOverPanel: Node;
+
+    @property(Node)
+    captureNode:Node;
 
     private playerLabels: Map<String, Label> = new Map();
     private playerScores: Map<String, number> = new Map();
@@ -134,6 +138,13 @@ export class UIManager extends Component {
         });
 
         this.gameOverPanel.active = true;
+    }
+
+    async screenShot(): Promise<string>{
+        const captureComp = this.captureNode.getComponent(UICapture);
+        const renderTexture = await captureComp.captureUINode(this.gameOverPanel);
+        const base64Image = captureComp.renderTextureToBase64(renderTexture);
+        return base64Image;
     }
 }
 

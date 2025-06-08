@@ -15,6 +15,8 @@ public enum EventName {
     SEND_MESSAGE,
     RECEIVE_MESSAGE,
 
+    SAVE_SCORE,
+
 
     // snake
     MOVE,

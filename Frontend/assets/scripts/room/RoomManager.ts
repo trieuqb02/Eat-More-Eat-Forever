@@ -15,7 +15,7 @@ export class RoomManager extends Component {
 
   private dataManager: DataManager = DataManager.getInstance();
 
-  private socketManager: SocketManager =  SocketManager.getInstance();
+  private socketManager: SocketManager = SocketManager.getInstance();
 
   private onJoinRoom = this.playerJoinRoom.bind(this);
   private onLeaveRoom = this.playerLeaveRoom.bind(this);
@@ -26,10 +26,10 @@ export class RoomManager extends Component {
   protected onLoad(): void {
     this.renderPlayersInRoom();
     this.socketManager.on(EventName.PLAYER_JOINED, this.onJoinRoom);
-    this.socketManager.on(EventName.LEAVED_ROOM,this.onLeaveRoom);
-    this.socketManager.on(EventName.DISSOLVE_ROOM,this.onDissolveRoom);
-    this.socketManager.on(EventName.STARTED_GAME,this.onStartedGame);
-    this.socketManager.on(EventName.CHANGE_READY,this.onChangeReady);
+    this.socketManager.on(EventName.LEAVED_ROOM, this.onLeaveRoom);
+    this.socketManager.on(EventName.DISSOLVE_ROOM, this.onDissolveRoom);
+    this.socketManager.on(EventName.STARTED_GAME, this.onStartedGame);
+    this.socketManager.on(EventName.CHANGE_READY, this.onChangeReady);
   }
 
   renderPlayersInRoom(): void {
@@ -53,8 +53,8 @@ export class RoomManager extends Component {
 
   playerLeaveRoom(player: Player): void {
     let arr = this.dataManager.getPlayersInRoom();
-    
-    arr = arr.filter(ele => ele.id != player.id);
+
+    arr = arr.filter((ele) => ele.id != player.id);
 
     this.dataManager.setPlayersInRoom(arr);
 
@@ -68,18 +68,22 @@ export class RoomManager extends Component {
     });
   }
 
-  changeReady(player: Player){
+  changeReady(player: Player) {
     this.ui.updatePlayer(player);
   }
 
   onClickCancelOrReadyOrStart() {
     const roomAndPlayer = this.dataManager.getRoomAndPlayer();
-    
-    this.socketManager.emit(EventName.START_GAME,{
-      roomId: roomAndPlayer.room.id,
-      playerId: roomAndPlayer.player.id,
-      isHost: roomAndPlayer.player.isHost,
-    },this.startGame.bind(this));
+
+    this.socketManager.emit(
+      EventName.START_GAME,
+      {
+        roomId: roomAndPlayer.room.id,
+        playerId: roomAndPlayer.player.id,
+        isHost: roomAndPlayer.player.isHost,
+      },
+      this.startGame.bind(this)
+    );
   }
 
   onClickLeaveRoom() {
@@ -94,19 +98,17 @@ export class RoomManager extends Component {
     );
   }
 
-  startedGame(start: boolean){
-    if(start){
-      console.log(this.dataManager.getRoomAndPlayer().player)
-      console.log("load scene game play");
-      if(this.dataManager.getRoomAndPlayer().player.isHost)
+  startedGame(start: boolean) {
+    if (start) {
+      if (this.dataManager.getRoomAndPlayer().player.isHost)
         this.socketManager.emit("START_GAMEPLAY", {
-            roomId: this.dataManager.getRoomAndPlayer().room.id
+          roomId: this.dataManager.getRoomAndPlayer().room.id,
         });
-      director.loadScene(SceneName.MAIN);
+      director.loadScene(SceneName.MAIN001);
     }
   }
 
-  startGame(code: number, message: string, player: Player){
+  startGame(code: number, message: string, player: Player) {
     if (code == Code.SUCCESS) {
       this.ui.updatePlayer(player);
     }

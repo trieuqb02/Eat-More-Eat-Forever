@@ -14,7 +14,9 @@ public interface IRoomPlayerService {
 
     List<LeaderBoardMV> getLeaderBoard();
 
-    LeaderBoardMV update(GameOverMV gameOverMV, MultipartFile image) throws IOException;
+    LeaderBoardMV update(GameOverMV gameOverMV);
+
+    RoomAndPlayerMV quitGame(UUID roomId, UUID playerId);
 
     byte[] getImage(UUID roomPlayerId);
 }

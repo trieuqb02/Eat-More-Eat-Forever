@@ -106,7 +106,7 @@ export class GameManger extends Component {
             UIManager.Instance.updateTimer(timer); 
         });
 
-        this.socketManager.on("GAME_OVER", () => {
+        this.socketManager.on("GAME_OVER", async () => {
             UIManager.Instance.displayGameOverPanel(); 
             this.scheduleOnce(()=>{
                 // destroy own snake
@@ -128,12 +128,22 @@ export class GameManger extends Component {
                 }
                 this.otherPlayers = {};
             }, 0);
+
+            const base64Image = await UIManager.Instance.screenShot(); 
+            this.socketManager.emit("SAVE_SCORE", {
+                playerId: this.playerId,
+                roomId: this.roomId,
+                score: 100,
+                imageBase64: base64Image,
+            })
+
         });
 
         // when Player quit game
         window.addEventListener("beforeunload", () => {
             this.socketManager.emit("PLAYER_QUIT", {
-                playerId: this.playerId
+                playerId: this.playerId,
+                roomId: this.roomId
             });
         });
 
@@ -201,5 +211,6 @@ export class GameManger extends Component {
         ctrl.enabled = false;
         ctrl.playerId = id;
     }
+    
 }
 
