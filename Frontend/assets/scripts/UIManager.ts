@@ -104,7 +104,7 @@ export class UIManager extends Component {
         this.gameOverResult.string = isWin ? "YOU WIN!" : "YOU LOSE!";
         this.gameOverResult.color = isWin ? new Color(255, 215, 0) : new Color(255, 80, 80);
 
-        this.gameOverYourScore.string = `Score: ${myScore}`;
+        this.gameOverYourScore.string = `${myScore}`;
 
         // Clear ranking
         this.gameOverRankingParent.removeAllChildren();

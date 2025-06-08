@@ -175,7 +175,7 @@
     "_priority": 0,
     "_fov": 45,
     "_fovAxis": 0,
-    "_orthoHeight": 369.88009592326136,
+    "_orthoHeight": 461.95488721804514,
     "_near": 0,
     "_far": 2000,
     "_color": {
@@ -325,7 +325,7 @@
   },
   {
     "__type__": "cc.Node",
-    "_name": "Table BG",
+    "_name": "BG Waiting Room",
     "_objFlags": 0,
     "__editorExtras__": {},
     "_parent": {
@@ -345,7 +345,7 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "x": 0,
-      "y": 0,
+      "y": -35.274,
       "z": 0
     },
     "_lrot": {
@@ -369,7 +369,7 @@
       "y": 0,
       "z": 0
     },
-    "_id": "03jZuQdAxB85bTGpwQpUPH"
+    "_id": "10jcPZKjNFVJobUA5ygvQY"
   },
   {
     "__type__": "cc.UITransform",
@@ -383,15 +383,15 @@
     "__prefab": null,
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 700,
-      "height": 499.67999999999995
+      "width": 639.0290000000001,
+      "height": 543.4468205533599
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
       "x": 0.5,
       "y": 0.5
     },
-    "_id": "806EyGuSRAQJ0NsT2f1fZ+"
+    "_id": "6acVUxG15IxYQb28jF+PYR"
   },
   {
     "__type__": "cc.Sprite",
@@ -408,13 +408,13 @@
     "_dstBlendFactor": 4,
     "_color": {
       "__type__": "cc.Color",
-      "r": 218,
-      "g": 178,
-      "b": 94,
+      "r": 255,
+      "g": 255,
+      "b": 255,
       "a": 255
     },
     "_spriteFrame": {
-      "__uuid__": "7d8f9b89-4fd1-4c9f-a3ab-38ec7cded7ca@f9941",
+      "__uuid__": "aa04b4e6-3fbc-43d2-a167-fb2946d5686e@f9941",
       "__expectedType__": "cc.SpriteFrame"
     },
     "_type": 0,
@@ -430,7 +430,7 @@
     "_isTrimmedMode": true,
     "_useGrayscale": false,
     "_atlas": null,
-    "_id": "8eEcWe5XFNHLOmnWJ/+mki"
+    "_id": "04VqbHdPJGDpqAiDnoV2R4"
   },
   {
     "__type__": "cc.Node",
@@ -495,7 +495,7 @@
     "__prefab": null,
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 620,
+      "width": 0,
       "height": 420
     },
     "_anchorPoint": {
@@ -515,7 +515,7 @@
     },
     "_enabled": true,
     "__prefab": null,
-    "_resizeMode": 0,
+    "_resizeMode": 1,
     "_layoutType": 3,
     "_cellSize": {
       "__type__": "cc.Size",
@@ -527,8 +527,8 @@
     "_paddingRight": 0,
     "_paddingTop": 0,
     "_paddingBottom": 0,
-    "_spacingX": 20,
-    "_spacingY": 20,
+    "_spacingX": 30,
+    "_spacingY": 0,
     "_verticalDirection": 1,
     "_horizontalDirection": 0,
     "_constraint": 2,
@@ -2021,7 +2021,7 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "x": -150,
-      "y": -260,
+      "y": -295.275,
       "z": 0
     },
     "_lrot": {
@@ -2347,7 +2347,7 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "x": 150,
-      "y": -260,
+      "y": -295.275,
       "z": 0
     },
     "_lrot": {
