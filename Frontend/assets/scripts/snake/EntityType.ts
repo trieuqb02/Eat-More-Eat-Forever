@@ -1,6 +1,7 @@
 export enum EntityType {
     RED,
     GREEN,
-    BLUE
+    BLUE, 
+    YELLOW
 }
 

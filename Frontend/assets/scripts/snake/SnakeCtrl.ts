@@ -6,6 +6,7 @@ import { GameManger } from '../GameManger';
 import { EventName } from '../utils/EventName';
 import { EntityType } from './EntityType';
 import { CameraFollowing } from '../CameraFollowing';
+import { UIManager } from '../UIManager';
 const { ccclass, property } = _decorator;
 
 type SnakeStep = {
@@ -30,13 +31,15 @@ export class SnakeCtrl extends Component {
 
     @property({ type: Prefab })
     tailPrefab: Prefab = null;
-    @property({ type: Node })
     tailParent: Node = null;
     @property
     tailSpacing: number = 10;
     private tailList: Node[] = [];
 
-    private score: number = 0;
+    private _score: number = 0;
+    get score() {return this._score;}
+    set score(value) {
+        if (value >= 0) this._score = value; }
 
     playerId: String = "";
 
@@ -78,6 +81,8 @@ export class SnakeCtrl extends Component {
     onBeginContact(selfCollider: Collider2D, otherCollider: Collider2D, contact: IPhysics2DContact) {
         if (this.playerId !== GameManger.Instance.playerId) 
             return; 
+
+        // eat food
         const food = otherCollider.getComponent(Food);
         if (food) {
             //this.addScore(food.scoreAmount);
@@ -88,6 +93,23 @@ export class SnakeCtrl extends Component {
                 foodType: food.foodType 
             });
         } 
+
+        // collide other snake
+        const tail = otherCollider.getComponent(SnakeTail); 
+        if (tail) {
+            console.log("Collide tail");
+            if (tail.playerId !== this.playerId) {
+                this.schedule(()=>{
+                    this.destroySnake();
+                }, 0)
+
+                // emit server
+                GameManger.Instance.socketManager.emit("SNAKE_DIED", {
+                    playerId: this.playerId,
+                    killedBy: tail.playerId
+                });
+            }
+        }
     }
 
     // ==============> SET ====================
@@ -123,10 +145,12 @@ export class SnakeCtrl extends Component {
 
         const newTail = instantiate(this.tailPrefab);
         this.tailParent.addChild(newTail);
+        newTail.setPosition(this.node.getPosition());
 
         const delay = (this.tailList.length + 1) * this.tailSpacing;
         const tailComp = newTail.getComponent(SnakeTail);
         if (tailComp) {
+            tailComp.playerId = this.playerId;
             tailComp.followDelay = delay;
             tailComp.snakeCtrl = this;
         }
@@ -134,6 +158,7 @@ export class SnakeCtrl extends Component {
     }
 
     destroySnake() {
+        UIManager.Instance.removePlayer(this.playerId);
         this.tailList.forEach(tailNode => {
             tailNode.destroy();
         });
