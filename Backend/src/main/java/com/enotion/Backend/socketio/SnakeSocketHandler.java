@@ -23,6 +23,8 @@ public class SnakeSocketHandler {
     Map<String, SnakeJoinedVM> activePlayers = new ConcurrentHashMap<>();
     Map<Integer, Boolean> spawnedFoods = new ConcurrentHashMap<>();
     Map<Integer, FoodMV> activeFoods = new ConcurrentHashMap<>();
+    Map<String, ScheduledExecutorService> gameTimers = new ConcurrentHashMap<>();
+    Map<String, Integer> roomTimers = new ConcurrentHashMap<>();
 
     public void registerHandlers(SocketIOServer server) {
         // event, type data receive, callback
@@ -34,6 +36,42 @@ public class SnakeSocketHandler {
             System.out.println("Player died: " + data.playerId());
             server.getBroadcastOperations().sendEvent("SNAKE_DIED", data);
         });
+        server.addEventListener("START_GAMEPLAY", StartGameVM.class, handleStartGame(server));
+    }
+
+    private DataListener<StartGameVM> handleStartGame(SocketIOServer server) {
+        return (client, data, ackSender) -> {
+            String roomId = data.roomId();
+            int gameTime = 60;
+
+            // check had
+            if (gameTimers.containsKey(roomId)) return;
+
+            System.out.println("Start game room ID: " + roomId);
+
+            roomTimers.put(roomId, gameTime);
+
+            ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+            gameTimers.put(roomId, scheduler);
+
+            scheduler.scheduleAtFixedRate(() -> {
+                int timer = roomTimers.get(roomId) - 1;
+
+                if (timer >= 0) {
+                    System.out.println("Timer: " + timer);
+                    roomTimers.put(roomId, timer);
+                    server.getRoomOperations(roomId).sendEvent("TIMER_COUNT", timer);
+                }
+
+                if (timer <= 0) {
+                    scheduler.shutdown();
+                    gameTimers.remove(roomId);
+                    roomTimers.remove(roomId);
+
+                    server.getRoomOperations(roomId).sendEvent("GAME_OVER");
+                }
+            }, 1, 1, TimeUnit.SECONDS);
+        };
     }
 
     private DataListener<PlayerLeaveVM> handlePlayerQuit(SocketIOServer server) {
@@ -87,6 +125,8 @@ public class SnakeSocketHandler {
     private DataListener<JoinGameVM> handleJoinGame(SocketIOServer server) {
         return (client, data, ackSender) -> {
             String playerId = data.playerId();
+            System.out.println("Join game room ID: " + data.roomId());
+
 
             SnakeJoinedVM joined = new SnakeJoinedVM(
                     playerId,
@@ -109,7 +149,7 @@ public class SnakeSocketHandler {
             // emit others client has new client
             server.getRoomOperations(String.valueOf(data.roomId())).sendEvent("NEW_PLAYER_JOINED", joined);
 
-            System.out.println("activePlayers.size(): " + activePlayers.size());
+            //System.out.println("activePlayers.size(): " + activePlayers.size());
             // spawn food
             // First player -> spawn 3 type food
             if (activeFoods.isEmpty()) {

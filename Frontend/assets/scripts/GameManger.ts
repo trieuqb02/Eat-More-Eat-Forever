@@ -101,6 +101,35 @@ export class GameManger extends Component {
             }
         });
 
+        this.socketManager.on("TIMER_COUNT", (timer) => {
+            console.log("TIMER_COUNT: " + timer)
+            UIManager.Instance.updateTimer(timer); 
+        });
+
+        this.socketManager.on("GAME_OVER", () => {
+            UIManager.Instance.displayGameOverPanel(); 
+            this.scheduleOnce(()=>{
+                // destroy own snake
+                if (this.snakeCtrl) {
+                    this.snakeCtrl.destroySnake();
+                    this.snakeCtrl = null;
+                }
+                // destroy others snake
+                for (let playerId in this.otherPlayers) {
+                    const node = this.otherPlayers[playerId];
+                    if (!node) continue;
+                    
+                    const snakeCtrl = node.getComponent(SnakeCtrl);
+                    if (snakeCtrl) {
+                        snakeCtrl.destroySnake();
+                    } else {
+                        node.destroy();
+                    }
+                }
+                this.otherPlayers = {};
+            }, 0);
+        });
+
         // when Player quit game
         window.addEventListener("beforeunload", () => {
             this.socketManager.emit("PLAYER_QUIT", {
@@ -131,8 +160,12 @@ export class GameManger extends Component {
     setScore(score){
         UIManager.Instance.setScore(score);
     }
+
+    getScore(){
+        return this.snakeCtrl.score;
+    }
     
-    arr: any[] = [ {id: "RED", pos: 0},{id: "BLUE", pos: 1},{id: "GREEN", pos: 2},{id: "YELLOW", pos: 3} ]
+    arr: any[] = [ {id: "RED", pos: 0},{id: "GREEN", pos: 1},{id: "BLUE", pos: 2},{id: "YELLOW", pos: 3} ]
 
     spawnSnake(id, pos, snakeType) {
         console.log("Spawn snake");
@@ -144,7 +177,7 @@ export class GameManger extends Component {
         })
         const snakeNode = instantiate(this.snakePrefabs[type]);
         snakeNode.setPosition(pos);
-        this.node.parent.addChild(snakeNode);
+        this.node.addChild(snakeNode);
 
         this.snakeCtrl = snakeNode.getComponent(SnakeCtrl);
         this.snakeCtrl.enabled = true;
@@ -161,7 +194,7 @@ export class GameManger extends Component {
         })
         const snakeNode = instantiate(this.snakePrefabs[type]);
         snakeNode.setPosition(pos);
-        this.node.parent.addChild(snakeNode);
+        this.node.addChild(snakeNode);
         this.otherPlayers[id] = snakeNode;
 
         const ctrl = snakeNode.getComponent(SnakeCtrl);

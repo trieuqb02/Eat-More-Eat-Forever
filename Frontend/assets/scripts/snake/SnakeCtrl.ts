@@ -31,7 +31,6 @@ export class SnakeCtrl extends Component {
 
     @property({ type: Prefab })
     tailPrefab: Prefab = null;
-    @property({ type: Node })
     tailParent: Node = null;
     @property
     tailSpacing: number = 10;

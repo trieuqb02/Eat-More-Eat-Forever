@@ -1,4 +1,4 @@
-import { _decorator, Color, Component, instantiate, Label, Node, Prefab, tween, Vec3 } from 'cc';
+import { _decorator, Color, Component, Game, instantiate, Label, Node, Prefab, tween, Vec3 } from 'cc';
 import { GameManger } from './GameManger';
 const { ccclass, property } = _decorator;
 
@@ -8,15 +8,24 @@ export class UIManager extends Component {
 
     @property(Label)
     scoreLabel: Label;
-
     @property(Prefab)
     scoreItemPrefab: Prefab = null;
-
     @property(Node)
     scoreTableParent: Node;
 
-    private playerLabels: Map<string, Label> = new Map();
-    private playerScores: Map<string, number> = new Map();
+    @property(Label)
+    timerLabel: Label;
+
+    @property(Node)
+    gameOverPanel: Node;
+
+    private playerLabels: Map<String, Label> = new Map();
+    private playerScores: Map<String, number> = new Map();
+
+    @property(Label) gameOverResult: Label;
+    @property(Label) gameOverYourScore: Label;
+    @property(Node) gameOverRankingParent: Node;
+    @property(Prefab) rankingItemPrefab: Prefab;
 
     protected onLoad() {
         if (UIManager.Instance === null) UIManager.Instance = this; // singleton
@@ -24,6 +33,10 @@ export class UIManager extends Component {
     onDestroy() {
         if (UIManager.Instance === this) 
             UIManager.Instance = null;
+    }
+
+    protected start() {
+        this.gameOverPanel.active = false;
     }
 
     setScore(score){
@@ -70,6 +83,57 @@ export class UIManager extends Component {
             label.node.destroy();
         }
         this.playerLabels.delete(playerId);
+    }
+
+    updateTimer(timer){
+        this.timerLabel.string = `${timer}`;
+    }
+
+    displayGameOverPanel(){
+        const myId = GameManger.Instance.playerId;
+        const myScore = this.playerScores.get(myId) || 0;
+
+        // Sort 
+        const sorted = Array.from(this.playerScores.entries())
+            .sort((a, b) => b[1] - a[1]);
+
+        // check win
+        const topId = sorted[0][0];
+        const isWin = topId === myId;
+
+        this.gameOverResult.string = isWin ? "YOU WIN!" : "YOU LOSE!";
+        this.gameOverResult.color = isWin ? new Color(255, 215, 0) : new Color(255, 80, 80);
+
+        this.gameOverYourScore.string = `Score: ${myScore}`;
+
+        // Clear ranking
+        this.gameOverRankingParent.removeAllChildren();
+
+        sorted.forEach(([id, score], index) => {
+            const item = instantiate(this.rankingItemPrefab);
+            //const icon = item.getChildByName("Icon")?.getComponent(Sprite);
+            const nameLabel = item.getChildByName("Name")?.getComponent(Label);
+            const scoreLabel = item.getChildByName("Score")?.getComponent(Label);
+
+            // Icon top 3
+            // if (icon) {
+            //     switch (index) {
+            //         case 0: icon.spriteFrame = this.goldSprite; break;
+            //         case 1: icon.spriteFrame = this.silverSprite; break;
+            //         case 2: icon.spriteFrame = this.bronzeSprite; break;
+            //         default: icon.node.active = false; break;
+            //     }
+            // }
+
+            // name
+            const nameStr = (id === myId) ? `${id.substring(0, 5)} (YOU)` : id.substring(0, 5);
+            nameLabel.string = nameStr;
+            scoreLabel.string = `${score}`;
+
+            this.gameOverRankingParent.addChild(item);
+        });
+
+        this.gameOverPanel.active = true;
     }
 }
 
