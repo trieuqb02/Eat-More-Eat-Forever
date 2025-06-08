@@ -12,9 +12,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
@@ -40,24 +38,24 @@ public class RoomPlayerService implements IRoomPlayerService {
     @Override
     public RoomAndPlayerMV changeReady(RoomAndPlayerVM data) {
         Room room = roomRepository.findById(data.roomId()).orElseThrow();
-        if(data.isHost()){
+        if (data.isHost()) {
             room.setState(RoomState.PLAYING);
             room = roomRepository.save(room);
         }
         Player player = playerRepository.findById(data.playerId()).orElseThrow();
-        RoomPlayer roomPlayer = roomPlayerRepository.findByRoomAndPlayer(room,player);
+        RoomPlayer roomPlayer = roomPlayerRepository.findByRoomAndPlayer(room, player);
         int quantityPresent = getPlayersInRoom(room.getId()).size();
-        if(data.isHost()){
+        if (data.isHost()) {
             boolean startGame = true;
             List<RoomPlayer> list = roomPlayerRepository.findAllByRoomAndLeftAtIsNull(room);
-            for (RoomPlayer element : list){
+            for (RoomPlayer element : list) {
                 if (!element.isReady() && !element.getPlayer().getId().equals(data.playerId())) {
                     startGame = false;
                     break;
                 }
             }
 
-            if(!startGame){
+            if (!startGame) {
                 return new RoomAndPlayerMV(RoomMV.convertRoomMV(roomPlayer.getRoom(), quantityPresent), PlayerMV.convertPlayerMV(roomPlayer));
             }
         }
@@ -79,10 +77,10 @@ public class RoomPlayerService implements IRoomPlayerService {
         Room room = roomRepository.findById(gameOverMV.roomId()).orElseThrow();
         Player player = playerRepository.findById(gameOverMV.playerId()).orElseThrow();
 
-        RoomPlayer roomPlayer = roomPlayerRepository.findByRoomAndPlayer(room,player);
+        RoomPlayer roomPlayer = roomPlayerRepository.findByRoomAndPlayer(room, player);
         roomPlayer.setScore(gameOverMV.score());
 
-        if(roomPlayer.isHost()){
+        if (roomPlayer.isHost()) {
             room.setState(RoomState.CLOSE);
             roomRepository.save(room);
         }
@@ -99,10 +97,10 @@ public class RoomPlayerService implements IRoomPlayerService {
     public RoomAndPlayerMV quitGame(UUID roomId, UUID playerId) {
         Room room = roomRepository.findById(roomId).orElseThrow();
         Player player = playerRepository.findById(playerId).orElseThrow();
-        RoomPlayer roomPlayer = roomPlayerRepository.findByRoomAndPlayer(room,player);
+        RoomPlayer roomPlayer = roomPlayerRepository.findByRoomAndPlayer(room, player);
         roomPlayer.setScore(0);
         roomPlayer = roomPlayerRepository.save(roomPlayer);
-        return new RoomAndPlayerMV(RoomMV.convertRoomMV(roomPlayer.getRoom(),0), PlayerMV.convertPlayerMV(roomPlayer));
+        return new RoomAndPlayerMV(RoomMV.convertRoomMV(roomPlayer.getRoom(), 0), PlayerMV.convertPlayerMV(roomPlayer));
     }
 
     @Override

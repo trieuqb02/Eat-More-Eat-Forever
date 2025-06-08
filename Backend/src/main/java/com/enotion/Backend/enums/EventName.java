@@ -12,6 +12,8 @@ public enum EventName {
     STARTED_GAME,
     CHANGE_READY,
 
+    REJOIN_GAME,
+
     SEND_MESSAGE,
     RECEIVE_MESSAGE,
 

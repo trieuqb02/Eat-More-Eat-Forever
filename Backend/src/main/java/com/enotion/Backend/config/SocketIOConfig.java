@@ -16,6 +16,8 @@ public class SocketIOConfig {
         com.corundumstudio.socketio.Configuration config = new com.corundumstudio.socketio.Configuration();
         config.setPort(port);
         config.setHostname("0.0.0.0");
+        config.setPingInterval(2000);
+        config.setPingTimeout(4000);
         SocketIOServer server = new SocketIOServer(config);
 
         manager.registerAll(server);

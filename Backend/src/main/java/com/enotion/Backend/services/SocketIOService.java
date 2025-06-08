@@ -19,9 +19,7 @@ public class SocketIOService {
     @PostConstruct
     public void startSocketServer() {
         server.addConnectListener(onConnected());
-
         server.addDisconnectListener(onDisconnected());
-
         server.start();
     }
 
@@ -34,6 +32,7 @@ public class SocketIOService {
     private DisconnectListener onDisconnected() {
         return client -> {
             System.out.println("Socket ID " + client.getSessionId().toString() + " disconnected from socket");
+
         };
     }
 
