@@ -4,6 +4,7 @@ import { SocketManager } from './socket/SocketManager';
 import { EventName } from './utils/EventName';
 import { SnakeCtrl } from './snake/SnakeCtrl';
 import { DataManager } from './DataManager';
+import { PowerUpType } from './power ups/PowerUpType';
 const { ccclass, property } = _decorator;
 
 @ccclass('GameManger')
@@ -72,7 +73,7 @@ export class GameManger extends Component {
                 } 
                 this.snakeCtrl.addScore(score);
                 UIManager.Instance.updateScore(playerId, this.snakeCtrl.score);
-                return;
+                return; 
             }
 
             const snakeNode = this.otherPlayers[playerId];
@@ -130,6 +131,30 @@ export class GameManger extends Component {
             }, 0);
         });
 
+        this.socketManager.on("APPLY_EFFECT", (data) => {
+            const playerId = data.playerId;
+            const effectType = data.effectType;
+
+            if (playerId === this.playerId) {
+                //this.applyEffectByType(effectType);
+            }
+
+            // Apply effect
+            // switch (effectType) {
+            //     case 0: // ACCELERATE
+            //     applySpeedBoost(playerId);
+            //     break;
+            //     case 1: // SLOW
+            //     applySlow(playerId);
+            //     break;
+            //     case 2: // SHIELD
+            //     applyShield(playerId);
+            //     break;
+            //     default:
+            //     console.warn("Unknown effectType:", effectType);
+            // }
+        });
+
         // when Player quit game
         window.addEventListener("beforeunload", () => {
             this.socketManager.emit("PLAYER_QUIT", {
@@ -156,6 +181,22 @@ export class GameManger extends Component {
     protected start(): void {
         this.socketManager.emit("JOIN_GAME", { playerId: this.playerId, roomId: this.roomId, type: this.type});
     }
+
+    // applyEffectByType(effectType: number) {
+    //     switch (effectType) {
+    //         case PowerUpType.ACCELERATE:
+    //             this.snakeCtrl.addEffect(new AccelerateEffect(this));
+    //             break;
+    //         case PowerUpType.SLOW:
+    //             effectCtrl.addEffect(new SlowEffect(this));
+    //             break;
+    //         case PowerUpType.SHIELD:
+    //             effectCtrl.addEffect(new ShieldEffect(this));
+    //             break;
+    //         default:
+    //             console.warn("Unknown effect type", effectType);
+    //     }
+    // }
 
     setScore(score){
         UIManager.Instance.setScore(score);

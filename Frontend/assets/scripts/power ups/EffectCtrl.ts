@@ -11,7 +11,7 @@ export class EffectCtrl {
         this.target = target;
     }
 
-    update(dt: number) {
+    update(dt) {
         for (let i = this.effects.length - 1; i >= 0; i--) {
             const effect = this.effects[i];
             const done = effect.update(dt);

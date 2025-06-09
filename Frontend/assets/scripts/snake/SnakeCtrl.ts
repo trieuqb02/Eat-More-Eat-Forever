@@ -7,6 +7,11 @@ import { EventName } from '../utils/EventName';
 import { EntityType } from './EntityType';
 import { CameraFollowing } from '../CameraFollowing';
 import { UIManager } from '../UIManager';
+import { EffectCtrl } from '../power ups/EffectCtrl';
+import { PowerUp } from '../power ups/PowerUp';
+import { IAcceleratable } from '../power ups/Accelerate/IAcceleratable';
+import { ISlowable } from '../power ups/Slow/ISlowable';
+import { PowerUpType } from '../power ups/PowerUpType';
 const { ccclass, property } = _decorator;
 
 type SnakeStep = {
@@ -15,9 +20,15 @@ type SnakeStep = {
 };
 
 @ccclass('SnakeCtrl')
-export class SnakeCtrl extends Component {
+export class SnakeCtrl extends Component implements IAcceleratable, ISlowable {
+    // Effect
+    private effectCtrl: EffectCtrl;
+
+    slowEffect: { active: boolean; };
+    accelerateEffect: { active: boolean; };
+
     @property
-    moveSpeed: number = 100;
+    moveSpeed: number;
 
     @property
     private steerSpeed: number = 100;
@@ -54,6 +65,8 @@ export class SnakeCtrl extends Component {
         if (collider) {
             collider.on(Contact2DType.BEGIN_CONTACT, this.onBeginContact, this);
         }
+
+        this.effectCtrl = new EffectCtrl(this);
     }
 
     onDestroy() {
@@ -76,6 +89,9 @@ export class SnakeCtrl extends Component {
 
         // save history
         this.saveHistory(this.node.position.clone(), this.node.rotation.clone());
+
+        // effect update
+        this.effectCtrl.update(deltaTime);
     }
 
     onBeginContact(selfCollider: Collider2D, otherCollider: Collider2D, contact: IPhysics2DContact) {
@@ -110,6 +126,31 @@ export class SnakeCtrl extends Component {
                 });
             }
         }
+
+        // check collect power ups
+        const powerUp = otherCollider.getComponent(PowerUp);
+        if (powerUp) {
+            // GameManger.Instance.socketManager.emit("POWER_UP_COLLECTED", {
+            //     playerId: this.playerId, 
+            //     powerUpType: PowerUpType.MYSTERY
+            // });
+            powerUp.pwUpActive(this); 
+        }
+    }
+
+    // ==============> EFFECT ====================
+    addEffect(effect){
+        this.effectCtrl.addEffect(effect);
+    }
+    
+    setAccelerate(enable, speedTimes) {
+        this.moveSpeed *= speedTimes;
+        // enable effect if had
+    }
+
+    setSlowSpeed(enable, speedTimes) {
+        this.moveSpeed *= speedTimes;
+        // enable effect if had
     }
 
     // ==============> SET ====================
