@@ -49,12 +49,10 @@ public class SnakeSocketHandler {
     private DataListener<StartGameVM> handleStartGame(SocketIOServer server) {
         return (client, data, ackSender) -> {
             String roomId = data.roomId();
-            int gameTime = 10;
+            int gameTime = 300;
 
             // check had
             if (gameTimers.containsKey(roomId)) return;
-
-            System.out.println("Start game room ID: " + roomId);
 
             roomTimers.put(roomId, gameTime);
 
@@ -127,16 +125,15 @@ public class SnakeSocketHandler {
 
     private DataListener<SnakeVM> handleMove(SocketIOServer server) {
         return (client, data, ackSender) -> {
-            // update pos x, y
-           for( PlayerSession playerSession: playerSessionStore.getAll().values()){
-               if(playerSession.getPlayerId().equals(data.id())){
-                   GameState gameState = playerSession.getGameState();
-                   gameState.setX(data.x());
-                   gameState.setY(data.y());
-                   playerSession.setGameState(gameState);
-                   break;
-               }
-           }
+            for (PlayerSession playerSession : playerSessionStore.getAll().values()) {
+                if (playerSession.getPlayerId().equals(data.id().toString())) {
+                    GameState gameState = playerSession.getGameState();
+                    gameState.setX(data.x());
+                    gameState.setY(data.y());
+                    playerSession.updateGameState(gameState);
+                    break;
+                }
+            }
 
             // send pos to other clients
             server.getRoomOperations(data.roomId()).sendEvent(EventName.SNAKE_MOVED.name(), data);
@@ -151,7 +148,6 @@ public class SnakeSocketHandler {
 
             SnakeJoinedVM joined = new SnakeJoinedVM(
                     playerId,
-                    data.roomId(),
                     x,
                     y,
                     0,
@@ -174,13 +170,11 @@ public class SnakeSocketHandler {
             gameState.setScore(0);
             gameState.setType(data.type());
 
-            PlayerSession playerSession = new PlayerSession();
-            playerSession.setGameState(gameState);
-            playerSession.setPlayerId(data.playerId());
-            playerSession.setSocketId(client.getSessionId().toString());
-            playerSession.setRoomId(data.roomId());
+            PlayerSession playerSession = new PlayerSession(String.valueOf(data.playerId()), client.getSessionId().toString(), String.valueOf(data.roomId()));
+            playerSession.updateGameState(gameState);
 
-            playerSessionStore.add(playerId,playerSession);
+
+            playerSessionStore.add(playerId, playerSession);
             // end save game-state
 
             // emit others client has new client
@@ -203,7 +197,6 @@ public class SnakeSocketHandler {
             float y = (float) (Math.random() * 1000 - 500);
 
             FoodMV food = new FoodMV(playerId, type, 0, x, y);
-            System.out.println("type: " + type);
             activeFoods.put(type, food);
             spawnedFoods.put(type, true);
 
@@ -213,18 +206,22 @@ public class SnakeSocketHandler {
 
     private DataListener<RoomAndPlayerVM> handleRejoinGame(SocketIOServer server) {
         return (socketIOClient, data, ackSender) -> {
-            RoomPlayer roomPlayer = roomPlayerService.getRoomPlayerByRoomIdAndPlayerId(data.roomId(), data.playerId());
-            GameState gameState = GameStateUtils.fromJson(roomPlayer.getGameState());
+            if (playerSessionStore.get(String.valueOf(data.playerId())) != null) {
+                RoomPlayer roomPlayer = roomPlayerService.getRoomPlayerByRoomIdAndPlayerId(data.roomId(), data.playerId());
+                GameState gameState = GameStateUtils.fromJson(roomPlayer.getGameState());
 
-            PlayerSession playerSession = new PlayerSession();
-            playerSession.setGameState(gameState);
-            playerSession.setPlayerId(String.valueOf(data.playerId()));
-            playerSession.setSocketId(socketIOClient.getSessionId().toString());
-            playerSession.setRoomId(String.valueOf(data.roomId()));
+                PlayerSession playerSession = playerSessionStore.get(String.valueOf(data.playerId()));
+                playerSession.markReconnected(socketIOClient.getSessionId().toString());
+                playerSession.updateGameState(gameState);
 
-            playerSessionStore.add(String.valueOf(data.playerId()),playerSession);
+                socketIOClient.joinRoom(String.valueOf(data.roomId()));
 
-            socketIOClient.joinRoom(String.valueOf(data.roomId()));
+                SnakeVM snakeVM = new SnakeVM(data.playerId(), gameState.getX(), gameState.getY(), gameState.getRot(), playerSession.getRoomId());
+
+                server.getRoomOperations(String.valueOf(data.roomId())).sendEvent(EventName.SNAKE_MOVED.name(), snakeVM);
+            } else {
+                socketIOClient.sendEvent(EventName.TIMEOUT_CONNECTION.name(), "time out");
+            }
         };
     }
 }

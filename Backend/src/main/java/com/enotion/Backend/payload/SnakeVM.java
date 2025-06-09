@@ -1,6 +1,8 @@
 package com.enotion.Backend.payload;
 
-public record SnakeVM(String id, float x, float y, float rot, String roomId) {
+import java.util.UUID;
+
+public record SnakeVM(UUID id, float x, float y, float rot, String roomId) {
 }
 
 

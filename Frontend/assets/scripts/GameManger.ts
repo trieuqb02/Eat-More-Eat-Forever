@@ -1,9 +1,11 @@
-import { _decorator, Component, director, instantiate, Node, Prefab, Vec3 } from 'cc';
+import { _decorator, Component, director, instantiate, Node, Prefab, Scene, Vec3 } from 'cc';
 import { UIManager } from './UIManager';
 import { SocketManager } from './socket/SocketManager';
 import { EventName } from './utils/EventName';
 import { SnakeCtrl } from './snake/SnakeCtrl';
 import { DataManager } from './DataManager';
+import GlobalEventBus from './GlobalEventBus';
+import { SceneName } from './utils/SceneName';
 const { ccclass, property } = _decorator;
 
 @ccclass('GameManger')
@@ -23,8 +25,17 @@ export class GameManger extends Component {
     private dataManager: DataManager = DataManager.getInstance()
 
     protected onLoad(): void {
-        director.on(EventName.DISCONNECT_NETWORK, this.onConnectionLost, this);
-        director.on(EventName.RECONNECT_NETWORK, this.onReconnection, this);
+        GlobalEventBus.on(EventName.DISCONNECT_NETWORK, this.onConnectionLost, this);
+        GlobalEventBus.on(EventName.RECONNECT_NETWORK, this.onReconnection, this);
+        this.socketManager.on(EventName.TIMEOUT_CONNECTION, () => {
+            this.socketManager.emit("PLAYER_QUIT", {
+                playerId: this.playerId,
+                roomId: this.roomId
+            });
+            director.loadScene(SceneName.WAITING_ROOM)
+        });
+
+
         if (GameManger.Instance === null) GameManger.Instance = this; // singleton
 
         const roomAndPlayer = this.dataManager.getRoomAndPlayer();
@@ -42,7 +53,6 @@ export class GameManger extends Component {
         this.socketManager.on("NEW_PLAYER_JOINED", (data) => {
             const { playerId, x, y, rot, snakeType } = data;
             if (playerId === this.playerId) return;
-            console.log("New player join");
             this.spawnOtherSnake(playerId, new Vec3(x, y, 0), snakeType); // another
             UIManager.Instance.updateScore(playerId, 0);
         });
@@ -104,7 +114,6 @@ export class GameManger extends Component {
         });
 
         this.socketManager.on("TIMER_COUNT", (timer) => {
-            console.log("TIMER_COUNT: " + timer)
             UIManager.Instance.updateTimer(timer); 
         });
 
@@ -160,12 +169,7 @@ export class GameManger extends Component {
             }
         });
     }
-    onDestroy() {
-        director.off(EventName.DISCONNECT_NETWORK, this.onConnectionLost, this);
-        if (GameManger.Instance === this) 
-            GameManger.Instance = null;
-    }
-
+    
     protected start(): void {
         this.socketManager.emit("JOIN_GAME", { playerId: this.playerId, roomId: this.roomId, type: this.type});
     }
@@ -214,13 +218,20 @@ export class GameManger extends Component {
     }
 
     onConnectionLost(){
-        UIManager.Instance.showDisconnectPanel();
         this.snakeCtrl.enabled = false;
+        UIManager.Instance.showDisconnectPanel();
     }
 
     onReconnection(){
         this.snakeCtrl.enabled = true;
         UIManager.Instance.showDisconnectPanel();
+    }
+
+    onDestroy() {
+        GlobalEventBus.off(EventName.DISCONNECT_NETWORK, this.onConnectionLost, this);
+        GlobalEventBus.off(EventName.RECONNECT_NETWORK, this.onReconnection, this);
+        if (GameManger.Instance === this) 
+            GameManger.Instance = null;
     }
 }
 

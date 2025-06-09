@@ -19,6 +19,7 @@ public enum EventName {
 
     SAVE_SCORE,
 
+    TIMEOUT_CONNECTION,
 
     // snake
     MOVE,

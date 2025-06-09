@@ -13,6 +13,8 @@ import jakarta.annotation.PreDestroy;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 @Component
 public class SocketIOService {
@@ -49,18 +51,34 @@ public class SocketIOService {
         return client -> {
             System.out.println("Socket ID " + client.getSessionId().toString() + " disconnected from socket");
 
+            String playerId = "";
             for (PlayerSession playerSession : playerSessionStore.getAll().values()) {
                 if (playerSession.getSocketId().equals(client.getSessionId().toString())) {
-                    System.out.println("save data");
+                    playerId = playerSession.getPlayerId();
                     String gameState = GameStateUtils.toJson(playerSession.getGameState());
                     RoomPlayer roomPlayer = roomPlayerService.getRoomPlayerByRoomIdAndPlayerId(UUID.fromString(playerSession.getRoomId()), UUID.fromString(playerSession.getPlayerId()));
                     roomPlayer.setGameState(gameState);
                     roomPlayerRepository.save(roomPlayer);
-                    playerSessionStore.remove(playerSession.getPlayerId());
+                    playerSession.markDisconnected();
                     break;
                 }
             }
+
+            String finalPlayerId = playerId;
+            Executors.newSingleThreadScheduledExecutor().schedule(() -> {
+                PlayerSession playerSession = playerSessionStore.get(finalPlayerId);
+                if (!playerSession.isOnline()) {
+                    playerSessionStore.remove(finalPlayerId);
+                    handlePlayerTimeout(finalPlayerId);
+                }
+            }, 10, TimeUnit.SECONDS);
         };
+    }
+
+    private void handlePlayerTimeout(String playerId) {
+
+        System.out.println("Player timeout: " + playerId);
+
     }
 
     @PreDestroy
