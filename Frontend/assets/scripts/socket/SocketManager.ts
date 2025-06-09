@@ -1,6 +1,7 @@
 import { Socket } from "socket.io-client";
 import { DataManager } from "../DataManager";
 import { EventName } from "../utils/EventName";
+import { director } from "cc";
 
 export class SocketManager {
   private static _instance: SocketManager;
@@ -27,6 +28,7 @@ export class SocketManager {
     this.socket.on("connect", () => {
       if (hasConnectedBefore) {
         console.log("Reconnected", this.socket.id);
+        director.emit(EventName.RECONNECT_NETWORK);
         const data = DataManager.getInstance().getRoomAndPlayer();
         if (data) {
           this.socket.emit(EventName.REJOIN_GAME, {
@@ -45,7 +47,9 @@ export class SocketManager {
 
     this.socket.on("disconnect", (reason) => {
       console.log("Lost connection:", reason);
-      // hiện pop up
+      
+      director.emit(EventName.DISCONNECT_NETWORK);
+      console.log("Socket disconnected");
     });
   }
 
@@ -54,7 +58,7 @@ export class SocketManager {
       this.socket.removeAllListeners();
       this.socket.disconnect();
       this.socket = null;
-      console.log("Socket disconnected");
+      
     }
   }
 

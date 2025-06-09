@@ -79,11 +79,11 @@ public class RoomPlayerService implements IRoomPlayerService {
 
         RoomPlayer roomPlayer = roomPlayerRepository.findByRoomAndPlayer(room, player);
         roomPlayer.setScore(gameOverMV.score());
+        roomPlayer.setReady(!roomPlayer.isReady());
 
-        if (roomPlayer.isHost()) {
-            room.setState(RoomState.CLOSE);
-            roomRepository.save(room);
-        }
+//        if (roomPlayer.isHost()) {
+//            roomRepository.save(room);
+//        }
 
         byte[] image = decodeBase64Image(gameOverMV.imageBase64());
 
@@ -108,6 +108,14 @@ public class RoomPlayerService implements IRoomPlayerService {
         RoomPlayer roomPlayer = roomPlayerRepository.findById(roomPlayerId).orElseThrow();
         return roomPlayer.getImage();
     }
+
+    @Override
+    public RoomPlayer getRoomPlayerByRoomIdAndPlayerId(UUID roomId, UUID playerId) {
+        Room room = roomRepository.findById(roomId).orElseThrow();
+        Player player = playerRepository.findById(playerId).orElseThrow();
+        return roomPlayerRepository.findByRoomAndPlayer(room, player);
+    }
+
 
     public static byte[] decodeBase64Image(String imageBase64) {
 

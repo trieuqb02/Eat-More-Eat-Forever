@@ -7,6 +7,7 @@ import { EventName } from '../utils/EventName';
 import { EntityType } from './EntityType';
 import { CameraFollowing } from '../CameraFollowing';
 import { UIManager } from '../UIManager';
+import { DataManager } from '../DataManager';
 const { ccclass, property } = _decorator;
 
 type SnakeStep = {
@@ -178,12 +179,14 @@ export class SnakeCtrl extends Component {
         const moveDelta = forward.clone().multiplyScalar(this.moveSpeed * dt);
         this.node.setPosition(this.node.position.add(moveDelta));
 
+        const roomId = DataManager.getInstance().getRoomAndPlayer().room.id;
         // emit to server
         GameManger.Instance.socketManager.emit(EventName.MOVE, {
             id: GameManger.Instance.playerId,
             x: this.node.position.x,
             y: this.node.position.y,
-            rot: this.currentAngle
+            rot: this.currentAngle,
+            roomId:roomId,
         });
     }
 

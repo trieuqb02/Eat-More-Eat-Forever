@@ -2,6 +2,7 @@ import { _decorator, Component, director,instantiate,Node, Prefab, ScrollView } 
 import { SocketManager } from '../socket/SocketManager';
 import { SceneName } from '../utils/SceneName';
 import { Leader_Board } from './Leader-Board';
+import { UICapture } from '../UICapture';
 const { ccclass, property } = _decorator;
 
 @ccclass('MenuManager')

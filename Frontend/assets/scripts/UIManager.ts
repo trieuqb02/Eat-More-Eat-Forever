@@ -23,6 +23,9 @@ export class UIManager extends Component {
     @property(Node)
     captureNode:Node;
 
+    @property(Node)
+    disconnectPanel: Node = null;
+
     private playerLabels: Map<String, Label> = new Map();
     private playerScores: Map<String, number> = new Map();
 
@@ -143,8 +146,13 @@ export class UIManager extends Component {
     async screenShot(): Promise<string>{
         const captureComp = this.captureNode.getComponent(UICapture);
         const renderTexture = await captureComp.captureUINode(this.gameOverPanel);
+        console.log('renderTexture', renderTexture)
         const base64Image = captureComp.renderTextureToBase64(renderTexture);
         return base64Image;
+    }
+
+    showDisconnectPanel(){
+        this.disconnectPanel.active = !this.disconnectPanel.active;
     }
 }
 

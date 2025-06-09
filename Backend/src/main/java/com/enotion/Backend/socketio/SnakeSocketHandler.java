@@ -2,9 +2,12 @@ package com.enotion.Backend.socketio;
 
 import com.corundumstudio.socketio.SocketIOServer;
 import com.corundumstudio.socketio.listener.DataListener;
+import com.enotion.Backend.config.PlayerSessionStore;
+import com.enotion.Backend.entities.RoomPlayer;
 import com.enotion.Backend.enums.EventName;
 import com.enotion.Backend.payload.*;
 import com.enotion.Backend.services.RoomPlayerService;
+import com.enotion.Backend.utils.GameStateUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -20,14 +23,14 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class SnakeSocketHandler {
-
-    Map<String, SnakeJoinedVM> activePlayers = new ConcurrentHashMap<>();
     Map<Integer, Boolean> spawnedFoods = new ConcurrentHashMap<>();
     Map<Integer, FoodMV> activeFoods = new ConcurrentHashMap<>();
     Map<String, ScheduledExecutorService> gameTimers = new ConcurrentHashMap<>();
     Map<String, Integer> roomTimers = new ConcurrentHashMap<>();
 
     RoomPlayerService roomPlayerService;
+
+    PlayerSessionStore playerSessionStore;
 
     public void registerHandlers(SocketIOServer server) {
         // event, type data receive, callback
@@ -39,6 +42,8 @@ public class SnakeSocketHandler {
             server.getBroadcastOperations().sendEvent("SNAKE_DIED", data);
         });
         server.addEventListener("START_GAMEPLAY", StartGameVM.class, handleStartGame(server));
+
+        server.addEventListener(EventName.REJOIN_GAME.name(), RoomAndPlayerVM.class, handleRejoinGame(server));
     }
 
     private DataListener<StartGameVM> handleStartGame(SocketIOServer server) {
@@ -60,7 +65,6 @@ public class SnakeSocketHandler {
                 int timer = roomTimers.get(roomId) - 1;
 
                 if (timer >= 0) {
-                    System.out.println("Timer: " + timer);
                     roomTimers.put(roomId, timer);
                     server.getRoomOperations(roomId).sendEvent("TIMER_COUNT", timer);
                 }
@@ -78,8 +82,10 @@ public class SnakeSocketHandler {
     private DataListener<PlayerLeaveVM> handlePlayerQuit(SocketIOServer server) {
         return (client, data, ackSender) -> {
             String playerId = String.valueOf(data.playerId());
-            activePlayers.remove(playerId);
+
             roomPlayerService.quitGame(data.roomId(), data.playerId());
+
+            playerSessionStore.remove(data.playerId().toString());
 
             client.leaveRoom(String.valueOf(data.roomId()));
             server.getRoomOperations(String.valueOf(data.roomId())).sendEvent("PLAYER_QUIT", data);
@@ -121,23 +127,37 @@ public class SnakeSocketHandler {
 
     private DataListener<SnakeVM> handleMove(SocketIOServer server) {
         return (client, data, ackSender) -> {
+            // update pos x, y
+           for( PlayerSession playerSession: playerSessionStore.getAll().values()){
+               if(playerSession.getPlayerId().equals(data.id())){
+                   GameState gameState = playerSession.getGameState();
+                   gameState.setX(data.x());
+                   gameState.setY(data.y());
+                   playerSession.setGameState(gameState);
+                   break;
+               }
+           }
+
             // send pos to other clients
-            server.getBroadcastOperations().sendEvent(EventName.SNAKE_MOVED.name(), data);
+            server.getRoomOperations(data.roomId()).sendEvent(EventName.SNAKE_MOVED.name(), data);
         };
     }
 
     private DataListener<JoinGameVM> handleJoinGame(SocketIOServer server) {
         return (client, data, ackSender) -> {
             String playerId = data.playerId();
-            System.out.println("Join game room ID: " + data.roomId());
+            float x = (float) (Math.random() * 500 - 250);
+            float y = (float) (Math.random() * 500 - 250);
 
             SnakeJoinedVM joined = new SnakeJoinedVM(
                     playerId,
-                    (float) (Math.random() * 500 - 250),
-                    (float) (Math.random() * 500 - 250),
+                    data.roomId(),
+                    x,
+                    y,
+                    0,
                     0,
                     data.type());
-            System.out.println(playerId + " joined");
+
             // send own client to spawn
             client.sendEvent("PLAYER_CREATED", joined);
 
@@ -146,17 +166,29 @@ public class SnakeSocketHandler {
                 client.sendEvent("SPAWN_FOOD", food);
             }
 
-            // save client joined to list
-            activePlayers.put(playerId, joined);
+            // save game-state
+            GameState gameState = new GameState();
+            gameState.setX(x);
+            gameState.setY(y);
+            gameState.setRot(0);
+            gameState.setScore(0);
+            gameState.setType(data.type());
+
+            PlayerSession playerSession = new PlayerSession();
+            playerSession.setGameState(gameState);
+            playerSession.setPlayerId(data.playerId());
+            playerSession.setSocketId(client.getSessionId().toString());
+            playerSession.setRoomId(data.roomId());
+
+            playerSessionStore.add(playerId,playerSession);
+            // end save game-state
 
             // emit others client has new client
             server.getRoomOperations(String.valueOf(data.roomId())).sendEvent("NEW_PLAYER_JOINED", joined);
 
-            //System.out.println("activePlayers.size(): " + activePlayers.size());
             // spawn food
             // First player -> spawn 3 type food
             if (activeFoods.isEmpty()) {
-                System.out.println("Has active player");
                 spawnInitialFoods(server, playerId);
             }
         };
@@ -177,5 +209,22 @@ public class SnakeSocketHandler {
 
             server.getBroadcastOperations().sendEvent("SPAWN_FOOD", food);
         }
+    }
+
+    private DataListener<RoomAndPlayerVM> handleRejoinGame(SocketIOServer server) {
+        return (socketIOClient, data, ackSender) -> {
+            RoomPlayer roomPlayer = roomPlayerService.getRoomPlayerByRoomIdAndPlayerId(data.roomId(), data.playerId());
+            GameState gameState = GameStateUtils.fromJson(roomPlayer.getGameState());
+
+            PlayerSession playerSession = new PlayerSession();
+            playerSession.setGameState(gameState);
+            playerSession.setPlayerId(String.valueOf(data.playerId()));
+            playerSession.setSocketId(socketIOClient.getSessionId().toString());
+            playerSession.setRoomId(String.valueOf(data.roomId()));
+
+            playerSessionStore.add(String.valueOf(data.playerId()),playerSession);
+
+            socketIOClient.joinRoom(String.valueOf(data.roomId()));
+        };
     }
 }

@@ -4,4 +4,4 @@ import com.enotion.Backend.enums.SnakeType;
 
 import java.util.UUID;
 
-public record JoinGameVM(String playerId, UUID roomId, SnakeType type) { }
+public record JoinGameVM(String playerId, String roomId, SnakeType type) { }

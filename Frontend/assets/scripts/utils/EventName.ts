@@ -19,4 +19,8 @@ export enum EventName {
 
   MOVE = "MOVE",
   SNAKE_MOVED = "SNAKE_MOVED",
+
+
+  DISCONNECT_NETWORK = "network:disconnected",
+  RECONNECT_NETWORK = "network:reconnect",
 }

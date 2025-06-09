@@ -31,7 +31,6 @@ public class RoomSocketHandler {
         server.addEventListener(EventName.START_GAME.name(), RoomAndPlayerVM.class, startGame(server));
         server.addEventListener(EventName.GET_ALL_ROOM.name(), String.class, getAllRoom());
         server.addEventListener(EventName.SAVE_SCORE.name(), GameOverMV.class, handleSaveScore(server));
-        server.addEventListener(EventName.REJOIN_GAME.name(), RoomAndPlayerVM.class, handleRejoinGame(server));
     }
 
     private DataListener<RoomVM> createRoom() {
@@ -118,12 +117,6 @@ public class RoomSocketHandler {
     private DataListener<GameOverMV> handleSaveScore(SocketIOServer server) {
         return (socketIOClient, data, ackSender) -> {
             roomPlayerService.update(data);
-        };
-    }
-
-    private DataListener<RoomAndPlayerVM> handleRejoinGame(SocketIOServer server) {
-        return (socketIOClient, data, ackSender) -> {
-            System.out.println(data);
         };
     }
 }

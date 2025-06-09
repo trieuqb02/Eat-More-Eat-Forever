@@ -1,4 +1,4 @@
-import { _decorator, Component, instantiate, Node, Prefab, Vec3 } from 'cc';
+import { _decorator, Component, director, instantiate, Node, Prefab, Vec3 } from 'cc';
 import { UIManager } from './UIManager';
 import { SocketManager } from './socket/SocketManager';
 import { EventName } from './utils/EventName';
@@ -23,6 +23,8 @@ export class GameManger extends Component {
     private dataManager: DataManager = DataManager.getInstance()
 
     protected onLoad(): void {
+        director.on(EventName.DISCONNECT_NETWORK, this.onConnectionLost, this);
+        director.on(EventName.RECONNECT_NETWORK, this.onReconnection, this);
         if (GameManger.Instance === null) GameManger.Instance = this; // singleton
 
         const roomAndPlayer = this.dataManager.getRoomAndPlayer();
@@ -159,6 +161,7 @@ export class GameManger extends Component {
         });
     }
     onDestroy() {
+        director.off(EventName.DISCONNECT_NETWORK, this.onConnectionLost, this);
         if (GameManger.Instance === this) 
             GameManger.Instance = null;
     }
@@ -178,7 +181,6 @@ export class GameManger extends Component {
     arr: any[] = [ {id: "RED", pos: 0},{id: "GREEN", pos: 1},{id: "BLUE", pos: 2},{id: "YELLOW", pos: 3} ]
 
     spawnSnake(id, pos, snakeType) {
-        console.log("Spawn snake");
         let type;
         this.arr.forEach(ele => {
             if(ele.id == snakeType){
@@ -195,7 +197,6 @@ export class GameManger extends Component {
     }
 
     spawnOtherSnake(id, pos, snakeType) {
-        console.log("Spawn other snake");
         let type;
         this.arr.forEach(ele => {
             if(ele.id == snakeType){
@@ -211,6 +212,15 @@ export class GameManger extends Component {
         ctrl.enabled = false;
         ctrl.playerId = id;
     }
-    
+
+    onConnectionLost(){
+        UIManager.Instance.showDisconnectPanel();
+        this.snakeCtrl.enabled = false;
+    }
+
+    onReconnection(){
+        this.snakeCtrl.enabled = true;
+        UIManager.Instance.showDisconnectPanel();
+    }
 }
 

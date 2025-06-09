@@ -46,4 +46,6 @@ public class RoomPlayer extends BaseTimeEntity {
 
     @Lob
     private byte[] image;
+
+    private String gameState;
 }

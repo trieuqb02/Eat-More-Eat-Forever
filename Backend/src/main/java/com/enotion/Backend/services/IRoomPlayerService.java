@@ -1,5 +1,6 @@
 package com.enotion.Backend.services;
 
+import com.enotion.Backend.entities.RoomPlayer;
 import com.enotion.Backend.payload.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -19,4 +20,6 @@ public interface IRoomPlayerService {
     RoomAndPlayerMV quitGame(UUID roomId, UUID playerId);
 
     byte[] getImage(UUID roomPlayerId);
+
+    RoomPlayer getRoomPlayerByRoomIdAndPlayerId(UUID roomId, UUID playerId);
 }

@@ -34,7 +34,7 @@ export class UICapture extends Component {
 
     cameraNode.setParent(director.getScene());
     const worldPos = targetNode.getWorldPosition();
-    cameraNode.setWorldPosition(worldPos.x, worldPos.y, worldPos.z + 1000);
+    cameraNode.setWorldPosition(worldPos.x, worldPos.y, worldPos.z + 600);
 
     return new Promise((resolve) => {
       this.scheduleOnce(() => {
