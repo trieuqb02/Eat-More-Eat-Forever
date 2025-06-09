@@ -5,6 +5,8 @@ import { EventName } from './utils/EventName';
 import { SnakeCtrl } from './snake/SnakeCtrl';
 import { DataManager } from './DataManager';
 import { PowerUpType } from './power ups/PowerUpType';
+import { AccelerateEffect } from './power ups/Accelerate/AccelerateEffect';
+import { SlowEffect } from './power ups/Slow/SlowEffect';
 const { ccclass, property } = _decorator;
 
 @ccclass('GameManger')
@@ -41,7 +43,6 @@ export class GameManger extends Component {
         this.socketManager.on("NEW_PLAYER_JOINED", (data) => {
             const { playerId, x, y, rot, snakeType } = data;
             if (playerId === this.playerId) return;
-            console.log("New player join");
             this.spawnOtherSnake(playerId, new Vec3(x, y, 0), snakeType); // another
             UIManager.Instance.updateScore(playerId, 0);
         });
@@ -103,7 +104,6 @@ export class GameManger extends Component {
         });
 
         this.socketManager.on("TIMER_COUNT", (timer) => {
-            console.log("TIMER_COUNT: " + timer)
             UIManager.Instance.updateTimer(timer); 
         });
 
@@ -132,27 +132,23 @@ export class GameManger extends Component {
         });
 
         this.socketManager.on("APPLY_EFFECT", (data) => {
-            const playerId = data.playerId;
-            const effectType = data.effectType;
+            const { playerId, effectType, duration } = data;
 
-            if (playerId === this.playerId) {
-                //this.applyEffectByType(effectType);
+            console.log("On APPLY_EFFECT event");
+            console.log("playerId: " + playerId + "effectType: " + effectType + "duration: " + duration);
+            // own
+            if (playerId === this.playerId && this.snakeCtrl) {
+                this.applyEffectToSnake(this.snakeCtrl, effectType, duration);
             }
 
-            // Apply effect
-            // switch (effectType) {
-            //     case 0: // ACCELERATE
-            //     applySpeedBoost(playerId);
-            //     break;
-            //     case 1: // SLOW
-            //     applySlow(playerId);
-            //     break;
-            //     case 2: // SHIELD
-            //     applyShield(playerId);
-            //     break;
-            //     default:
-            //     console.warn("Unknown effectType:", effectType);
-            // }
+            // others
+            const otherSnake = this.otherPlayers[playerId];
+            if (otherSnake) {
+                const snakeCtrl = otherSnake.getComponent(SnakeCtrl);
+                if (snakeCtrl) {
+                    this.applyEffectToSnake(snakeCtrl, effectType, duration);
+                }
+            }
         });
 
         // when Player quit game
@@ -178,25 +174,22 @@ export class GameManger extends Component {
             GameManger.Instance = null;
     }
 
-    protected start(): void {
+    protected start() {
         this.socketManager.emit("JOIN_GAME", { playerId: this.playerId, roomId: this.roomId, type: this.type});
     }
 
-    // applyEffectByType(effectType: number) {
-    //     switch (effectType) {
-    //         case PowerUpType.ACCELERATE:
-    //             this.snakeCtrl.addEffect(new AccelerateEffect(this));
-    //             break;
-    //         case PowerUpType.SLOW:
-    //             effectCtrl.addEffect(new SlowEffect(this));
-    //             break;
-    //         case PowerUpType.SHIELD:
-    //             effectCtrl.addEffect(new ShieldEffect(this));
-    //             break;
-    //         default:
-    //             console.warn("Unknown effect type", effectType);
-    //     }
-    // }
+    applyEffectToSnake(snakeCtrl: SnakeCtrl, effectType: number, duration: number) {
+        switch (effectType) {
+            case PowerUpType.ACCELERATE:
+                snakeCtrl.addEffect(new AccelerateEffect(duration, snakeCtrl));
+                break;
+            case PowerUpType.SLOW:
+                snakeCtrl.addEffect(new SlowEffect(duration, snakeCtrl));
+                break;
+            default:
+                console.warn("Unknown effect: ", effectType);
+        }
+    }
 
     setScore(score){
         UIManager.Instance.setScore(score);
@@ -209,7 +202,6 @@ export class GameManger extends Component {
     arr: any[] = [ {id: "RED", pos: 0},{id: "GREEN", pos: 1},{id: "BLUE", pos: 2},{id: "YELLOW", pos: 3} ]
 
     spawnSnake(id, pos, snakeType) {
-        console.log("Spawn snake");
         let type;
         this.arr.forEach(ele => {
             if(ele.id == snakeType){
@@ -221,12 +213,12 @@ export class GameManger extends Component {
         this.node.addChild(snakeNode);
 
         this.snakeCtrl = snakeNode.getComponent(SnakeCtrl);
-        this.snakeCtrl.enabled = true;
+        //this.snakeCtrl.enabled = true;
+        this.snakeCtrl.isOwner = true;
         this.snakeCtrl.playerId = this.playerId;
     }
 
     spawnOtherSnake(id, pos, snakeType) {
-        console.log("Spawn other snake");
         let type;
         this.arr.forEach(ele => {
             if(ele.id == snakeType){
@@ -239,7 +231,8 @@ export class GameManger extends Component {
         this.otherPlayers[id] = snakeNode;
 
         const ctrl = snakeNode.getComponent(SnakeCtrl);
-        ctrl.enabled = false;
+        //ctrl.enabled = false;
+        ctrl.isOwner = false;
         ctrl.playerId = id;
     }
 }

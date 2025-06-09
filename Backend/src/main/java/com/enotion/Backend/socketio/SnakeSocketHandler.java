@@ -13,10 +13,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 @Component
 @RequiredArgsConstructor
@@ -27,6 +24,7 @@ public class SnakeSocketHandler {
     Map<Integer, FoodMV> activeFoods = new ConcurrentHashMap<>();
     Map<String, ScheduledExecutorService> gameTimers = new ConcurrentHashMap<>();
     Map<String, Integer> roomTimers = new ConcurrentHashMap<>();
+    ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
     public void registerHandlers(SocketIOServer server) {
         // event, type data receive, callback
@@ -44,6 +42,7 @@ public class SnakeSocketHandler {
             String playerId = data.playerId();
             String roomId = data.roomId();
             int powerUpType = data.powerUpType();
+            int duration = data.duration();
 
             PowerUpType type;
             try {
@@ -58,7 +57,7 @@ public class SnakeSocketHandler {
                 effectToApply = PowerUpType.getRandomBasicEffect();
             }
 
-            PowerUpEffectMV effectData = new PowerUpEffectMV(playerId, effectToApply.getCode());
+            PowerUpEffectMV effectData = new PowerUpEffectMV(playerId, effectToApply.getCode(), duration);
             server.getRoomOperations(roomId).sendEvent("APPLY_EFFECT", effectData);
         });
     }
@@ -67,6 +66,8 @@ public class SnakeSocketHandler {
         return (client, data, ackSender) -> {
             String roomId = data.roomId();
             int gameTime = 60;
+
+            spawnPowerUp(server, roomId);
 
             // check had
             if (gameTimers.containsKey(roomId)) return;
@@ -200,44 +201,15 @@ public class SnakeSocketHandler {
         }
     }
 
-    private void scheduleMysterySpawn(SocketIOServer server, String roomId) {
-        ScheduledExecutorService mysteryScheduler = Executors.newSingleThreadScheduledExecutor();
-
-        Runnable spawnTask = new Runnable() {
-            @Override
-            public void run() {
-                if (!gameTimers.containsKey(roomId)) return; // Game đã dừng
-
-                int foodType = 3;
-                if (spawnedFoods.getOrDefault(foodType, false)) return;
-
-                float x = (float)(Math.random() * 600 - 300);
-                float y = (float)(Math.random() * 400 - 200);
-                FoodMV newFood = new FoodMV("MYSTERY", foodType, 0, x, y);
-                activeFoods.put(foodType, newFood);
-                spawnedFoods.put(foodType, true);
-                server.getRoomOperations(roomId).sendEvent("SPAWN_FOOD", newFood);
-
-                // Reschedule mystery spawn after random delay
-                int delaySeconds = 10 + (int)(Math.random() * 10); // 10–20s
-                mysteryScheduler.schedule(this, delaySeconds, TimeUnit.SECONDS);
-            }
-        };
-
-        // First spawn after 10–20s
-        int delay = 10 + (int)(Math.random() * 10);
-        mysteryScheduler.schedule(spawnTask, delay, TimeUnit.SECONDS);
-
-        // Lưu lại để hủy khi cần
-        gameTimers.put(roomId + "_MYSTERY", mysteryScheduler);
-    }
-
     private void spawnPowerUp(SocketIOServer server, String roomId) {
-        int type = new Random().nextInt(3); // SPEED, SHIELD, MAGNET
-        float x = (float) (Math.random() * 1000 - 500);
-        float y = (float) (Math.random() * 1000 - 500);
+        scheduler.scheduleAtFixedRate(() -> {
+            int randomInterval = ThreadLocalRandom.current().nextInt(5, 15); // 5-15s
+            float x = (float)(Math.random() * 600 - 300);
+            float y = (float)(Math.random() * 400 - 200);
 
-        PowerUpMV powerUp = new PowerUpMV(null, type, x, y);
-        server.getRoomOperations(roomId).sendEvent("SPAWN_POWER_UP", powerUp);
+            PowerUpMV spawnData = new PowerUpMV(PowerUpType.MYSTERY.getCode(), x, y);
+            server.getRoomOperations(roomId).sendEvent("SPAWN_POWER_UP", spawnData);
+
+        }, 0, 10, TimeUnit.SECONDS);
     }
 }

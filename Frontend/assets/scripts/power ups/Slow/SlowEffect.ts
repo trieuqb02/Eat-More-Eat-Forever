@@ -1,20 +1,23 @@
 import { _decorator, Component, Node } from 'cc';
 import { IEffect } from '../IEffect';
 import { ISlowable } from './ISlowable';
+import { PowerUpType } from '../PowerUpType';
 const { ccclass, property } = _decorator;
 
 @ccclass('SlowEffect')
 export class SlowEffect implements IEffect {
-    duration: number;
     elapsed = 0;
-    name: string;
+    
+    duration: number;
+    type: PowerUpType;
     speedSlowTimes: number;
     private target: ISlowable;
 
-    constructor(duration: number, target: ISlowable, speedSlowTimes: number) {
+    constructor(duration: number, target: ISlowable) {
         this.duration = duration;
         this.target = target;
-        this.speedSlowTimes = speedSlowTimes;
+        this.speedSlowTimes = 0.5;
+        this.type = PowerUpType.SLOW;
     }
 
     onStart() {

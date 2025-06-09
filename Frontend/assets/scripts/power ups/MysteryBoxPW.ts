@@ -4,25 +4,20 @@ import { IEffect } from './IEffect';
 import { AccelerateEffect } from './Accelerate/AccelerateEffect';
 import { SlowEffect } from './Slow/SlowEffect';
 import { GameManger } from '../GameManger';
+import { PowerUpType } from './PowerUpType';
 const { ccclass, property } = _decorator;
 
 @ccclass('MysteryBoxPW')
 export class MysteryBoxPW extends PowerUp {
-    @property
-    private duration: number = 5;
-
-    // @property
-    // private speedAccelerateTimes: number = 2;
-    // @property
-    // private speedSlowTimes: number = 0.5;
+    powerUpType: PowerUpType = PowerUpType.MYSTERY;
 
     pwUpActive(target) {
         // GameManger.Instance.socketManager.emit("POWER_UP_COLLECTED", {
         //     playerId: this.playerId, 
         //     powerUpType: PowerUpType.MYSTERY
         // });
-        // // sellect a effect
-        // const rand = Math.floor(Math.random() * 2);
+        // sellect a effect
+        //const rand = Math.floor(Math.random() * 2);
 
         // let effect: IEffect;
 

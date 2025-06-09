@@ -1,20 +1,23 @@
 import { _decorator, Component, Node } from 'cc';
 import { IAcceleratable } from './IAcceleratable';
 import { IEffect } from '../IEffect';
+import { PowerUpType } from '../PowerUpType';
 const { ccclass, property } = _decorator;
 
 @ccclass('AccelerateEffect')
 export class AccelerateEffect implements IEffect {
-    duration: number;
     elapsed = 0;
-    name: string;
-    speedAccelerateTimes: number;
+    
+    duration: number;
+    type: PowerUpType;
+    speedAccelerateTimes: number = 2;
     private target: IAcceleratable;
 
-    constructor(duration: number, target: IAcceleratable, speedAccelerateTimes: number) {
+    constructor(duration: number, target: IAcceleratable) {
         this.duration = duration;
         this.target = target;
-        this.speedAccelerateTimes = speedAccelerateTimes;
+        this.speedAccelerateTimes = 2;
+        this.type = PowerUpType.ACCELERATE;
     }
 
     onStart() {

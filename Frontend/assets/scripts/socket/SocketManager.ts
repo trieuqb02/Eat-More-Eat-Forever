@@ -15,7 +15,7 @@ export class SocketManager {
   public initSocket() {
     if (this.socket) return;
 
-    this.socket = (window as any).io("http://172.16.1.29:3000",{
+    this.socket = (window as any).io("http://localhost:3000",{
       reconnection: true,          
       reconnectionAttempts: 5,     
       reconnectionDelay: 1000,     

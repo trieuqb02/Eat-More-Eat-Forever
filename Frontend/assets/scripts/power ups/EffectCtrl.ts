@@ -22,10 +22,11 @@ export class EffectCtrl {
     }
 
     addEffect(effect: IEffect) {
-        const existing = this.effects.find(e => e.name === effect.name);
+        const existing = this.effects.find(e => e.type === effect.type);
         if (existing) {
-            existing.duration = Math.max(existing.duration, effect.duration);
-            existing.elapsed = 0; // reset time
+            //existing.duration = Math.max(existing.duration, effect.duration);
+            existing.duration += effect.duration;
+            //existing.elapsed = 0; // reset time
         } else {
             effect.onStart();
             this.effects.push(effect);

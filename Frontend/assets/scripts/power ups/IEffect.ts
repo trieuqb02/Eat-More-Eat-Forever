@@ -1,5 +1,7 @@
+import { PowerUpType } from "./PowerUpType";
+
 export interface IEffect {
-    name: string;
+    type: PowerUpType;
     duration: number;
     elapsed: number;
     update(deltaTime: number);

@@ -11,8 +11,7 @@ import { EffectCtrl } from '../power ups/EffectCtrl';
 import { PowerUp } from '../power ups/PowerUp';
 import { IAcceleratable } from '../power ups/Accelerate/IAcceleratable';
 import { ISlowable } from '../power ups/Slow/ISlowable';
-import { PowerUpType } from '../power ups/PowerUpType';
-const { ccclass, property } = _decorator;
+const { ccclass, property } = _decorator; 
 
 type SnakeStep = {
     position: Vec3,
@@ -21,14 +20,17 @@ type SnakeStep = {
 
 @ccclass('SnakeCtrl')
 export class SnakeCtrl extends Component implements IAcceleratable, ISlowable {
+    isOwner: boolean = false;
     // Effect
     private effectCtrl: EffectCtrl;
 
-    slowEffect: { active: boolean; };
-    accelerateEffect: { active: boolean; };
+    @property(Node)
+    accelerateEffect: Node;
+    @property(Node)
+    slowEffect: Node;
 
     @property
-    moveSpeed: number;
+    moveSpeed: number = 150;
 
     @property
     private steerSpeed: number = 100;
@@ -77,10 +79,15 @@ export class SnakeCtrl extends Component implements IAcceleratable, ISlowable {
     protected start() {
         this.currentAngle = this.node.eulerAngles.z;
 
-        CameraFollowing.Instance.target = this.node;
+        if(this.isOwner)
+            CameraFollowing.Instance.target = this.node;
     }
 
     update(deltaTime: number) {
+        // effect update
+        this.effectCtrl.update(deltaTime);
+
+        if(!this.isOwner) return;
         // steer
         this.steer(deltaTime);
 
@@ -89,9 +96,6 @@ export class SnakeCtrl extends Component implements IAcceleratable, ISlowable {
 
         // save history
         this.saveHistory(this.node.position.clone(), this.node.rotation.clone());
-
-        // effect update
-        this.effectCtrl.update(deltaTime);
     }
 
     onBeginContact(selfCollider: Collider2D, otherCollider: Collider2D, contact: IPhysics2DContact) {
@@ -130,11 +134,13 @@ export class SnakeCtrl extends Component implements IAcceleratable, ISlowable {
         // check collect power ups
         const powerUp = otherCollider.getComponent(PowerUp);
         if (powerUp) {
-            // GameManger.Instance.socketManager.emit("POWER_UP_COLLECTED", {
-            //     playerId: this.playerId, 
-            //     powerUpType: PowerUpType.MYSTERY
-            // });
-            powerUp.pwUpActive(this); 
+            //powerUp.pwUpActive(this); 
+            GameManger.Instance.socketManager.emit("POWER_UP_COLLECTED", {
+                playerId: GameManger.Instance.playerId,
+                roomId: GameManger.Instance.roomId,
+                powerUpType: powerUp.powerUpType,
+                duration: powerUp.duration,
+            });
         }
     }
 
@@ -146,11 +152,13 @@ export class SnakeCtrl extends Component implements IAcceleratable, ISlowable {
     setAccelerate(enable, speedTimes) {
         this.moveSpeed *= speedTimes;
         // enable effect if had
+        this.accelerateEffect.active = enable;
     }
 
     setSlowSpeed(enable, speedTimes) {
         this.moveSpeed *= speedTimes;
         // enable effect if had
+        this.slowEffect.active = enable;
     }
 
     // ==============> SET ====================
