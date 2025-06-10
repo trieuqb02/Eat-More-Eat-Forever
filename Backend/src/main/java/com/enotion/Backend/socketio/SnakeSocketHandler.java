@@ -110,9 +110,8 @@ public class SnakeSocketHandler {
 
             roomPlayerService.quitGame(data.roomId(), data.playerId());
 
-            playerSessionStore.remove(data.playerId().toString());
-
             client.leaveRoom(String.valueOf(data.roomId()));
+
             server.getRoomOperations(String.valueOf(data.roomId())).sendEvent("PLAYER_QUIT", data);
 
             server.getBroadcastOperations().sendEvent("PLAYER_QUIT", data);
@@ -260,6 +259,7 @@ public class SnakeSocketHandler {
                 socketIOClient.sendEvent(EventName.TIMEOUT_CONNECTION.name(), "time out");
             }
         };
+    }
 
     private void spawnPowerUp(SocketIOServer server, String roomId) {
         int delay = ThreadLocalRandom.current().nextInt(3000, 7000);

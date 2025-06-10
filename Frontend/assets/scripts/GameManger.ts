@@ -138,7 +138,7 @@ export class GameManger extends Component {
             this.socketManager.emit("SAVE_SCORE", {
                 playerId: this.playerId,
                 roomId: this.roomId,
-                score: 100,
+                score: this.getScore(),
                 imageBase64: base64Image,
             })
 
