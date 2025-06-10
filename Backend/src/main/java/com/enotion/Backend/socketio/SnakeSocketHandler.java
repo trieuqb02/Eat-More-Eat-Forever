@@ -68,6 +68,12 @@ public class SnakeSocketHandler {
             PowerUpEffectMV effectData = new PowerUpEffectMV(playerId, effectToApply.getCode(), duration);
             server.getRoomOperations(roomId).sendEvent("APPLY_EFFECT", effectData);
         });
+
+        server.addEventListener("SPAWN_FOOD", FoodMV.class, (client, data, ackSender) -> {
+            String playerId = data.playerId();
+
+
+        });
     }
 
     private DataListener<StartGameVM> handleStartGame(SocketIOServer server) {

@@ -55,9 +55,9 @@
     },
     "_lscale": {
       "__type__": "cc.Vec3",
-      "x": 1,
-      "y": 1,
-      "z": 1
+      "x": 0.727,
+      "y": 0.727,
+      "z": 0.727
     },
     "_mobility": 0,
     "_layer": 33554432,
@@ -472,7 +472,7 @@
       "a": 255
     },
     "_spriteFrame": {
-      "__uuid__": "544e49d6-3f05-4fa8-9a9e-091f98fc2ce8@f9941",
+      "__uuid__": "435e5601-9132-4764-be98-1618938e6c06@f9941",
       "__expectedType__": "cc.SpriteFrame"
     },
     "_type": 1,
@@ -911,17 +911,20 @@
       "b": 187,
       "a": 255
     },
-    "_string": "Input message",
+    "_string": "   Input message",
     "_horizontalAlign": 0,
     "_verticalAlign": 1,
-    "_actualFontSize": 20.65625,
+    "_actualFontSize": 20,
     "_fontSize": 20,
     "_fontFamily": "Arial",
     "_lineHeight": 40,
     "_overflow": 1,
     "_enableWrapText": false,
-    "_font": null,
-    "_isSystemFontUsed": true,
+    "_font": {
+      "__uuid__": "8261f7fa-9ed5-4b27-907e-980347c81974",
+      "__expectedType__": "cc.TTFFont"
+    },
+    "_isSystemFontUsed": false,
     "_spacingX": 0,
     "_isItalic": false,
     "_isBold": false,
@@ -1021,7 +1024,7 @@
       "a": 255
     },
     "_spriteFrame": {
-      "__uuid__": "bd1bcaba-bd7d-4a71-b143-997c882383e4@f9941",
+      "__uuid__": "052bad48-8ee1-4a3f-a4ea-4ce46dfcda08@f9941",
       "__expectedType__": "cc.SpriteFrame"
     },
     "_type": 1,
@@ -1073,7 +1076,7 @@
     "_string": "",
     "_tabIndex": 0,
     "_backgroundImage": {
-      "__uuid__": "bd1bcaba-bd7d-4a71-b143-997c882383e4@f9941",
+      "__uuid__": "052bad48-8ee1-4a3f-a4ea-4ce46dfcda08@f9941",
       "__expectedType__": "cc.SpriteFrame"
     },
     "_inputFlag": 5,

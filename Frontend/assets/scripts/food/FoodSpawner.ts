@@ -1,4 +1,4 @@
-import { _decorator, Component, instantiate, Node, Prefab, Vec3 } from 'cc';
+import { _decorator, BoxCollider2D, Component, director, instantiate, Layers, Node, Prefab, Size, Vec3 } from 'cc';
 import { EntityType } from '../snake/EntityType';
 import { GameManger } from '../GameManger';
 const { ccclass, property } = _decorator;
@@ -9,6 +9,9 @@ export class FoodSpawner extends Component {
 
     @property({ type: [Prefab] })
     foodPrefabs: Prefab[] = [];
+
+    @property(Prefab)
+    testCollidePrefab: Prefab
 
     private activeFoods: Map<EntityType, Node> = new Map();
 
@@ -27,7 +30,17 @@ export class FoodSpawner extends Component {
 
         GameManger.Instance.socketManager.on("SPAWN_FOOD", (data) => {
             const { foodType, x, y } = data;
-            this.spawnFood(foodType, new Vec3(x, y, 0));
+            const pos = new Vec3(x, y, 0);
+            this.checkSpawnFoodPosition(pos, (valid) => {
+                if (valid) {
+                    this.spawnFood(foodType, pos);
+                } else {
+                    GameManger.Instance.socketManager.emit("SPAWN_FOOD", {
+                        foodType,
+                        roomId: GameManger.Instance.roomId,
+                    });
+                }
+            });
         });
     }
 
@@ -41,5 +54,35 @@ export class FoodSpawner extends Component {
 
         this.activeFoods.set(type, food);
     }
+
+    checkSpawnFoodPosition(pos: Vec3, callback: (valid: boolean) => void) {
+        const testNode = instantiate(this.testCollidePrefab);
+        this.node.addChild(testNode);
+        testNode.setPosition(pos);
+
+        testNode.once('COLLIDE_RESULT', (isCollide: boolean) => {
+            callback(!isCollide); 
+        });
+    }
+
+    // trySpawnFoodWithValidation(type, pos, maxAttempts: number = 10) {
+    //     const trySpawn = (attempt: number) => {
+    //         if (attempt >= maxAttempts) {
+    //             console.warn("Failed to spawn food");
+    //             return;
+    //         }
+
+    //         this.checkSpawnFoodPosition(pos, (valid) => {
+    //             if (valid) {
+    //                 this.spawnFood(type, pos);
+    //             } else {
+    //                 trySpawn(attempt + 1);
+    //             }
+    //         });
+    //     };
+
+    //     trySpawn(0);
+    // }
+
 }
 
