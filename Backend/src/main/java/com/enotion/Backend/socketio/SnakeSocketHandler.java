@@ -44,6 +44,12 @@ public class SnakeSocketHandler {
             int powerUpType = data.powerUpType();
             int duration = data.duration();
 
+            System.out.println("POWER_UP_COLLECTED");
+            // remove
+            server.getRoomOperations(roomId).sendEvent("POWER_UP_REMOVED", powerUpType);
+            spawnPowerUp(server, roomId);
+
+
             PowerUpType type;
             try {
                 type = PowerUpType.fromCode(powerUpType);
@@ -60,6 +66,12 @@ public class SnakeSocketHandler {
             PowerUpEffectMV effectData = new PowerUpEffectMV(playerId, effectToApply.getCode(), duration);
             server.getRoomOperations(roomId).sendEvent("APPLY_EFFECT", effectData);
         });
+
+//        server.addEventListener("POWER_UP_REMOVED", PowerUpCollectedVM.class, (client, data, ackSender) -> {
+//            String roomId = data.roomId();
+//            int powerUpType = data.powerUpType();
+//            server.getRoomOperations(roomId).sendEvent("POWER_UP_REMOVED", powerUpType);
+//        });
     }
 
     private DataListener<StartGameVM> handleStartGame(SocketIOServer server) {
@@ -202,14 +214,14 @@ public class SnakeSocketHandler {
     }
 
     private void spawnPowerUp(SocketIOServer server, String roomId) {
-        scheduler.scheduleAtFixedRate(() -> {
-            int randomInterval = ThreadLocalRandom.current().nextInt(5, 15); // 5-15s
+        int delay = ThreadLocalRandom.current().nextInt(3000, 7000);
+        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+        scheduler.schedule(() -> {
             float x = (float)(Math.random() * 600 - 300);
             float y = (float)(Math.random() * 400 - 200);
-
-            PowerUpMV spawnData = new PowerUpMV(PowerUpType.MYSTERY.getCode(), x, y);
+            int powerUpType = PowerUpType.MYSTERY.getCode();
+            PowerUpMV spawnData = new PowerUpMV(powerUpType, x, y);
             server.getRoomOperations(roomId).sendEvent("SPAWN_POWER_UP", spawnData);
-
-        }, 0, 10, TimeUnit.SECONDS);
+        }, delay, TimeUnit.MILLISECONDS);
     }
 }

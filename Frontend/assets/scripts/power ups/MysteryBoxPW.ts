@@ -38,5 +38,9 @@ export class MysteryBoxPW extends PowerUp {
         //     this.node.destroy();
         // }, 0);
     }
+
+    protected onDestroy(): void {
+        console.log("PW destroy");
+    }
 }
 

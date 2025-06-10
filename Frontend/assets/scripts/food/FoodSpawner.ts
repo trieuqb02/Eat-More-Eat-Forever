@@ -20,12 +20,11 @@ export class FoodSpawner extends Component {
         GameManger.Instance.socketManager.on("FOOD_REMOVED", (type: number) => {
             const foodNode = this.activeFoods.get(type);
             if (foodNode) {
-                console.log("food remove");
                 foodNode.destroy();
                 this.activeFoods.delete(type);
             }
         });
-        // socket
+
         GameManger.Instance.socketManager.on("SPAWN_FOOD", (data) => {
             const { foodType, x, y } = data;
             this.spawnFood(foodType, new Vec3(x, y, 0));
@@ -33,7 +32,6 @@ export class FoodSpawner extends Component {
     }
 
     spawnFood(type, position) {
-        console.log("type: " + type);
         if (this.activeFoods.has(type)) return;
         const prefab = this.foodPrefabs[type];
         if (!prefab) return;

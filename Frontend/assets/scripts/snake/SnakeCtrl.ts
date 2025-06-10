@@ -57,7 +57,6 @@ export class SnakeCtrl extends Component implements IAcceleratable, ISlowable {
     playerId: String = "";
 
     onLoad() {
-        // ref
         this.tailParent = find('Canvas/TailParent');
 
         input.on(Input.EventType.KEY_DOWN, this.onKeyDown, this);
@@ -84,17 +83,12 @@ export class SnakeCtrl extends Component implements IAcceleratable, ISlowable {
     }
 
     update(deltaTime: number) {
-        // effect update
         this.effectCtrl.update(deltaTime);
 
         if(!this.isOwner) return;
-        // steer
+
         this.steer(deltaTime);
-
-        // move forward
         this.moveForward(deltaTime)
-
-        // save history
         this.saveHistory(this.node.position.clone(), this.node.rotation.clone());
     }
 
@@ -105,8 +99,6 @@ export class SnakeCtrl extends Component implements IAcceleratable, ISlowable {
         // eat food
         const food = otherCollider.getComponent(Food);
         if (food) {
-            //this.addScore(food.scoreAmount);
-            // Emit to server food type eaten
             GameManger.Instance.socketManager.emit("FOOD_EATEN", {
                 playerId: GameManger.Instance.playerId,
                 snakeType: this.snakeType,
@@ -134,7 +126,6 @@ export class SnakeCtrl extends Component implements IAcceleratable, ISlowable {
         // check collect power ups
         const powerUp = otherCollider.getComponent(PowerUp);
         if (powerUp) {
-            //powerUp.pwUpActive(this); 
             GameManger.Instance.socketManager.emit("POWER_UP_COLLECTED", {
                 playerId: GameManger.Instance.playerId,
                 roomId: GameManger.Instance.roomId,
@@ -151,13 +142,11 @@ export class SnakeCtrl extends Component implements IAcceleratable, ISlowable {
     
     setAccelerate(enable, speedTimes) {
         this.moveSpeed *= speedTimes;
-        // enable effect if had
         this.accelerateEffect.active = enable;
     }
 
     setSlowSpeed(enable, speedTimes) {
         this.moveSpeed *= speedTimes;
-        // enable effect if had
         this.slowEffect.active = enable;
     }
 
@@ -247,11 +236,6 @@ export class SnakeCtrl extends Component implements IAcceleratable, ISlowable {
             this.steerDirection = 1;
         } else if (event.keyCode === KeyCode.ARROW_RIGHT || event.keyCode === KeyCode.KEY_D) {
             this.steerDirection = -1;
-        }
-
-        // for test
-        if (event.keyCode === KeyCode.KEY_T) {
-            this.steerDirection = 1;
         }
     }
 

@@ -134,8 +134,6 @@ export class GameManger extends Component {
         this.socketManager.on("APPLY_EFFECT", (data) => {
             const { playerId, effectType, duration } = data;
 
-            console.log("On APPLY_EFFECT event");
-            console.log("playerId: " + playerId + "effectType: " + effectType + "duration: " + duration);
             // own
             if (playerId === this.playerId && this.snakeCtrl) {
                 this.applyEffectToSnake(this.snakeCtrl, effectType, duration);
