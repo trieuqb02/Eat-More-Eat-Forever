@@ -2,6 +2,8 @@ import { Socket } from "socket.io-client";
 import { DataManager } from "../DataManager";
 import { EventName } from "../utils/EventName";
 import GlobalEventBus from "../GlobalEventBus";
+import { SceneName } from "../utils/SceneName";
+import { director } from "cc";
 
 export class SocketManager {
   private static _instance: SocketManager;
@@ -50,7 +52,18 @@ export class SocketManager {
 
       GlobalEventBus.emit(EventName.DISCONNECT_NETWORK);
     });
+
+    this.socket.on(EventName.TIMEOUT_CONNECTION, () => {
+      const data = DataManager.getInstance().getRoomAndPlayer();
+      this.socket.emit("PLAYER_QUIT", {
+          playerId: data.player.id,
+          roomId: data.room.id
+      });
+      director.loadScene(SceneName.WAITING_ROOM)
+  });
   }
+
+  
 
   public disconnect() {
     if (this.socket) {

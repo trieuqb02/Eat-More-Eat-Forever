@@ -7,18 +7,19 @@ const { ccclass, property } = _decorator;
 export class Leader_Board extends Component implements IBaseComponent {
     private roomPlayerId: string;
     private score: number;
-    private namePlayer: string
+    private namePlayer: string;
+    private urlImage: string;
 
     init(data: LeaderBoard): void {
         this.roomPlayerId = data.roomPlayerId;
         this.namePlayer = data.name;
-        this.score = data.score
+        this.score = data.score;
+        this.urlImage = data.urlImage;
     }
 
     protected onLoad(): void {
         const image = this.node.getChildByName("Image").getComponent(Sprite);
-        let remoteUrl = `http://localhost:8080/api/v1/view/${this.roomPlayerId}`;
-        assetManager.loadRemote<ImageAsset>(remoteUrl, {ext: '.png'}, function (err, imageAsset) {
+        assetManager.loadRemote<ImageAsset>(this.urlImage, {ext: '.png'}, function (err, imageAsset) {
             const spriteFrame = new SpriteFrame();
             const texture = new Texture2D();
             texture.image = imageAsset;

@@ -69,7 +69,4 @@ export class UIRoom extends Component {
     timeLB.string = time
     this.chatList.content.addChild(chatItem);
   }
-
-
-
 }

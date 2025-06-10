@@ -87,6 +87,7 @@ public class RoomPlayerService implements IRoomPlayerService {
         byte[] image = decodeBase64Image(gameOverMV.imageBase64());
 
         roomPlayer.setImage(image);
+        roomPlayer.setUrlImage("http://localhost:8080/api/v1/view/" + player.getId());
 
         roomPlayer = roomPlayerRepository.save(roomPlayer);
         return LeaderBoardMV.converToLeaderBoardMV(roomPlayer);
