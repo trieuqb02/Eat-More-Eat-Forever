@@ -260,6 +260,7 @@ public class SnakeSocketHandler {
                 socketIOClient.sendEvent(EventName.TIMEOUT_CONNECTION.name(), "time out");
             }
         };
+    }
 
     private void spawnPowerUp(SocketIOServer server, String roomId) {
         int delay = ThreadLocalRandom.current().nextInt(3000, 7000);
@@ -275,6 +276,5 @@ public class SnakeSocketHandler {
 
     private void resetScore(String playerId) {
         playerScores.put(playerId, 0);
-
     }
 }
