@@ -6,6 +6,9 @@ import { SnakeCtrl } from './snake/SnakeCtrl';
 import { DataManager } from './DataManager';
 import GlobalEventBus from './GlobalEventBus';
 import { SceneName } from './utils/SceneName';
+import { PowerUpType } from './power ups/PowerUpType';
+import { AccelerateEffect } from './power ups/Accelerate/AccelerateEffect';
+import { SlowEffect } from './power ups/Slow/SlowEffect';
 const { ccclass, property } = _decorator;
 
 @ccclass('GameManger')
@@ -68,15 +71,15 @@ export class GameManger extends Component {
 
         this.socketManager.on("FOOD_EATEN", (data) => {
             const { playerId, isMapping, score } = data;
-            if (playerId === this.playerId && this.snakeCtrl){
+            if (playerId === this.playerId && this.snakeCtrl && this.snakeCtrl.isOwner){
                 if (isMapping) {
                     this.snakeCtrl.grow();
                 } else {
-                    this.snakeCtrl.shrinkTail(3);
+                    this.snakeCtrl.shrinkTail(1);
                 } 
-                this.snakeCtrl.addScore(score);
-                UIManager.Instance.updateScore(playerId, this.snakeCtrl.score);
-                return;
+                UIManager.Instance.setScore(score);
+                UIManager.Instance.updateScore(playerId, score);
+                return; 
             }
 
             const snakeNode = this.otherPlayers[playerId];
@@ -86,10 +89,9 @@ export class GameManger extends Component {
                     if (isMapping) {
                         snakeCtrl.grow();
                     } else {
-                        snakeCtrl.shrinkTail(3);
+                        snakeCtrl.shrinkTail(1);
                     }
-                    snakeCtrl.addScore(score);
-                    UIManager.Instance.updateScore(playerId, snakeCtrl.score);
+                    UIManager.Instance.updateScore(playerId, score);
                 }
             }
         });
@@ -142,6 +144,24 @@ export class GameManger extends Component {
 
         });
 
+        this.socketManager.on("APPLY_EFFECT", (data) => {
+            const { playerId, effectType, duration } = data;
+
+            // own
+            if (playerId === this.playerId && this.snakeCtrl) {
+                this.applyEffectToSnake(this.snakeCtrl, effectType, duration);
+            }
+
+            // others
+            const otherSnake = this.otherPlayers[playerId];
+            if (otherSnake) {
+                const snakeCtrl = otherSnake.getComponent(SnakeCtrl);
+                if (snakeCtrl) {
+                    this.applyEffectToSnake(snakeCtrl, effectType, duration);
+                }
+            }
+        });
+
         // when Player quit game
         window.addEventListener("beforeunload", () => {
             this.socketManager.emit("PLAYER_QUIT", {
@@ -161,9 +181,22 @@ export class GameManger extends Component {
             }
         });
     }
-    
-    protected start(): void {
+
+    protected start() {
         this.socketManager.emit("JOIN_GAME", { playerId: this.playerId, roomId: this.roomId, type: this.type});
+    }
+
+    applyEffectToSnake(snakeCtrl: SnakeCtrl, effectType: number, duration: number) {
+        switch (effectType) {
+            case PowerUpType.ACCELERATE:
+                snakeCtrl.addEffect(new AccelerateEffect(duration, snakeCtrl));
+                break;
+            case PowerUpType.SLOW:
+                snakeCtrl.addEffect(new SlowEffect(duration, snakeCtrl));
+                break;
+            default:
+                console.warn("Unknown effect: ", effectType);
+        }
     }
 
     setScore(score){
@@ -188,7 +221,8 @@ export class GameManger extends Component {
         this.node.addChild(snakeNode);
 
         this.snakeCtrl = snakeNode.getComponent(SnakeCtrl);
-        this.snakeCtrl.enabled = true;
+        //this.snakeCtrl.enabled = true;
+        this.snakeCtrl.isOwner = true;
         this.snakeCtrl.playerId = this.playerId;
     }
 
@@ -205,7 +239,8 @@ export class GameManger extends Component {
         this.otherPlayers[id] = snakeNode;
 
         const ctrl = snakeNode.getComponent(SnakeCtrl);
-        ctrl.enabled = false;
+        //ctrl.enabled = false;
+        ctrl.isOwner = false;
         ctrl.playerId = id;
     }
 
