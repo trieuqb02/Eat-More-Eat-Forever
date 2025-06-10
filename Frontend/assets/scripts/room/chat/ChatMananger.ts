@@ -3,7 +3,6 @@ import { SocketManager } from '../../socket/SocketManager';
 import { EventName } from '../../utils/EventName';
 import { DataManager } from '../../DataManager';
 import { UIRoom } from '../UIRoom';
-import { Player } from '../../entity/Player';
 const { ccclass, property } = _decorator;
 
 @ccclass('ChatMananger')
@@ -21,10 +20,10 @@ export class ChatMananger extends Component {
     private onReceiveMessage = this.receiveMessage.bind(this);
 
     protected onLoad(): void {
-        this.socketManager.on(EventName.RECEIVE_MESSAGE,this.onReceiveMessage )
+        this.socketManager.on(EventName.RECEIVE_MESSAGE,this.onReceiveMessage);
     }
 
-    clickSendMessage(): void{
+    sendMessage(): void{
         const message = this.inputMessage.string;
         if(!message){
             return;
@@ -37,7 +36,6 @@ export class ChatMananger extends Component {
             roomId: roomAndPlayer.room.id
         }, this.renderMessage.bind(this))
 
-        
         this.inputMessage.string = "";
     }
 
