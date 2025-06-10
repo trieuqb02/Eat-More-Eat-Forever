@@ -146,8 +146,7 @@ export class UIManager extends Component {
     async screenShot(): Promise<string>{
         const captureComp = this.captureNode.getComponent(UICapture);
         const renderTexture = await captureComp.captureUINode(this.gameOverPanel);
-        console.log('renderTexture', renderTexture)
-        const base64Image = captureComp.renderTextureToBase64(renderTexture);
+        const base64Image = await captureComp.renderTextureToCompressedBase64(renderTexture);
         return base64Image;
     }
 

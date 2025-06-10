@@ -134,14 +134,13 @@ export class GameManger extends Component {
                 this.otherPlayers = {};
             }, 0);
 
-            const base64Image = await UIManager.Instance.screenShot(); 
+            const base64Image = await UIManager.Instance.screenShot();
             this.socketManager.emit("SAVE_SCORE", {
                 playerId: this.playerId,
                 roomId: this.roomId,
-                score: this.getScore(),
                 imageBase64: base64Image,
             })
-
+            
         });
 
         this.socketManager.on("APPLY_EFFECT", (data) => {

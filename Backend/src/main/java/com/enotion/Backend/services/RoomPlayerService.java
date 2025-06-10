@@ -71,23 +71,23 @@ public class RoomPlayerService implements IRoomPlayerService {
 
     @Override
     public List<LeaderBoardMV> getLeaderBoard() {
-        List<RoomPlayer> list = roomPlayerRepository.findTop10ByScoreNotNullOrderByScoreDesc();
+        List<RoomPlayer> list = roomPlayerRepository.findTop10ByScoreIsNotNullAndScoreGreaterThanOrderByScoreDesc(0);
         return list.stream().map(LeaderBoardMV::converToLeaderBoardMV).toList();
     }
 
     @Override
-    public LeaderBoardMV update(GameOverMV gameOverMV) {
+    public LeaderBoardMV update(GameOverMV gameOverMV, int score) {
         Room room = roomRepository.findById(gameOverMV.roomId()).orElseThrow();
         Player player = playerRepository.findById(gameOverMV.playerId()).orElseThrow();
 
         RoomPlayer roomPlayer = roomPlayerRepository.findByRoomAndPlayer(room, player);
-        roomPlayer.setScore(gameOverMV.score());
+        roomPlayer.setScore(score);
         roomPlayer.setReady(!roomPlayer.isReady());
 
         byte[] image = decodeBase64Image(gameOverMV.imageBase64());
 
         roomPlayer.setImage(image);
-        roomPlayer.setUrlImage("http://localhost:8080/api/v1/view/" + player.getId());
+        roomPlayer.setUrlImage("http://localhost:8080/api/v1/view/" + roomPlayer.getId());
 
         roomPlayer = roomPlayerRepository.save(roomPlayer);
         return LeaderBoardMV.converToLeaderBoardMV(roomPlayer);

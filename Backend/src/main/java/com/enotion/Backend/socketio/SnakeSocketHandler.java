@@ -37,6 +37,7 @@ public class SnakeSocketHandler {
         server.addEventListener("JOIN_GAME", JoinGameVM.class, handleJoinGame(server));
         server.addEventListener("FOOD_EATEN", FoodMV.class, handleFoodEaten(server));
         server.addEventListener("PLAYER_QUIT", PlayerLeaveVM.class, handlePlayerQuit(server));
+        server.addEventListener(EventName.SAVE_SCORE.name(), GameOverMV.class, handleSaveScore(server));
         server.addEventListener("SNAKE_DIED", PlayerLeaveVM.class, (client, data, ackSender) -> {
             server.getBroadcastOperations().sendEvent("SNAKE_DIED", data);
         });
@@ -73,7 +74,7 @@ public class SnakeSocketHandler {
     private DataListener<StartGameVM> handleStartGame(SocketIOServer server) {
         return (client, data, ackSender) -> {
             String roomId = data.roomId();
-            int gameTime = 300;
+            int gameTime = 20;
 
             spawnPowerUp(server, roomId);
 
@@ -130,7 +131,7 @@ public class SnakeSocketHandler {
 
             int amountScore = isMapping ? 10 : -10;
             int score = playerScores.getOrDefault(playerId, 0) + amountScore;
-            if(score <= 0){
+            if (score <= 0) {
                 score = 0;
             }
             playerScores.put(playerId, score);
@@ -210,7 +211,7 @@ public class SnakeSocketHandler {
 
 
             playerSessionStore.add(playerId, playerSession);
-            
+
 
             // emit others client has new client
             server.getRoomOperations(String.valueOf(data.roomId())).sendEvent("NEW_PLAYER_JOINED", joined);
@@ -265,8 +266,8 @@ public class SnakeSocketHandler {
         int delay = ThreadLocalRandom.current().nextInt(3000, 7000);
         ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
         scheduler.schedule(() -> {
-            float x = (float)(Math.random() * 600 - 300);
-            float y = (float)(Math.random() * 400 - 200);
+            float x = (float) (Math.random() * 600 - 300);
+            float y = (float) (Math.random() * 400 - 200);
             int powerUpType = PowerUpType.MYSTERY.getCode();
             PowerUpMV spawnData = new PowerUpMV(powerUpType, x, y);
             server.getRoomOperations(roomId).sendEvent("SPAWN_POWER_UP", spawnData);
@@ -276,5 +277,12 @@ public class SnakeSocketHandler {
     private void resetScore(String playerId) {
         playerScores.put(playerId, 0);
 
+    }
+
+    private DataListener<GameOverMV> handleSaveScore(SocketIOServer server) {
+        return (socketIOClient, data, ackSender) -> {
+            int score = playerScores.get(data.playerId().toString());
+            roomPlayerService.update(data, score);
+        };
     }
 }

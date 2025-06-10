@@ -12,5 +12,5 @@ public interface RoomPlayerRepository extends JpaRepository<RoomPlayer, UUID> {
     List<RoomPlayer> findAllByRoomAndLeftAtIsNull(Room room);
     RoomPlayer findByRoomAndPlayer(Room room, Player player);
     RoomPlayer findByPlayer(Player player);
-    List<RoomPlayer> findTop10ByScoreNotNullOrderByScoreDesc();
+    List<RoomPlayer> findTop10ByScoreIsNotNullAndScoreGreaterThanOrderByScoreDesc(int score);
 }

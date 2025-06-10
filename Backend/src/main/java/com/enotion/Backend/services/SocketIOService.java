@@ -1,5 +1,6 @@
 package com.enotion.Backend.services;
 
+import com.corundumstudio.socketio.SocketIOClient;
 import com.corundumstudio.socketio.SocketIOServer;
 import com.corundumstudio.socketio.listener.ConnectListener;
 import com.corundumstudio.socketio.listener.DisconnectListener;
@@ -76,7 +77,7 @@ public class SocketIOService {
                     roomPlayer.setLeftAt(LocalDateTime.now());
                     roomPlayerRepository.save(roomPlayer);
 
-                    scheduleCheckingQuitedPlayer(playerId);
+                    scheduleCheckingQuitedPlayer(playerId, client);
 
                     playerSession.markDisconnected();
                     break;
@@ -86,7 +87,7 @@ public class SocketIOService {
         };
     }
 
-    private void scheduleCheckingQuitedPlayer(String playerId){
+    private void scheduleCheckingQuitedPlayer(String playerId, SocketIOClient client){
         Executors.newSingleThreadScheduledExecutor().schedule(() -> {
 
             PlayerSession session = playerSessionStore.get(playerId);
@@ -97,7 +98,9 @@ public class SocketIOService {
                         UUID.fromString(session.getPlayerId())
                 );
 
-                timedOutPlayer.setScore(0);
+                if(timedOutPlayer.getUrlImage().isEmpty()){
+                    timedOutPlayer.setScore(0);
+                }
                 timedOutPlayer.setReady(!timedOutPlayer.isReady());
                 roomPlayerRepository.save(timedOutPlayer);
 
@@ -105,7 +108,7 @@ public class SocketIOService {
                         .orElseThrow(() -> new IllegalStateException("Room not found"));
 
                 List<RoomPlayer> roomPlayers = roomPlayerRepository.findAllByRoomAndLeftAtIsNull(room);
-                System.out.println(roomPlayers.isEmpty());
+
                 if (roomPlayers.isEmpty()) {
                     room.setState(RoomState.CLOSE);
                     roomRepository.save(room);

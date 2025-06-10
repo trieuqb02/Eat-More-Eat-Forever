@@ -104,7 +104,7 @@ export class RoomManager extends Component {
         this.socketManager.emit(EventName.START_GAMEPLAY, {
           roomId: this.dataManager.getRoomAndPlayer().room.id,
         });
-      director.loadScene(SceneName.MAIN001);
+      director.loadScene(SceneName.MAIN);
     }
   }
 

@@ -3,6 +3,7 @@ import { SocketManager } from '../socket/SocketManager';
 import { SceneName } from '../utils/SceneName';
 import { Leader_Board } from './Leader-Board';
 import { UICapture } from '../UICapture';
+import { ImageOverlay } from './ImageOverlay';
 const { ccclass, property } = _decorator;
 
 @ccclass('MenuManager')
@@ -15,6 +16,9 @@ export class MenuManager extends Component {
 
     @property(Prefab)
     private leaderBoardPrefab: Prefab = null;
+
+    @property(ImageOverlay)
+    private imageOverlay: ImageOverlay = null;
 
     private socketManager: SocketManager = SocketManager.getInstance();
 
@@ -38,6 +42,7 @@ export class MenuManager extends Component {
                         const leaderBoardPrefab = instantiate(this.leaderBoardPrefab);
                         const comp = leaderBoardPrefab.getComponent(Leader_Board);
                         comp.init(element);
+                        comp.setOverlay(this.imageOverlay);
                         this.list.content.addChild(leaderBoardPrefab);
                     });
                 } 
