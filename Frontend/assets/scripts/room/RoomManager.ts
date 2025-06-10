@@ -101,7 +101,7 @@ export class RoomManager extends Component {
   startedGame(start: boolean) {
     if (start) {
       if (this.dataManager.getRoomAndPlayer().player.isHost)
-        this.socketManager.emit("START_GAMEPLAY", {
+        this.socketManager.emit(EventName.START_GAMEPLAY, {
           roomId: this.dataManager.getRoomAndPlayer().room.id,
         });
       director.loadScene(SceneName.MAIN001);

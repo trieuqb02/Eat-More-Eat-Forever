@@ -27,14 +27,6 @@ export class GameManger extends Component {
     protected onLoad(): void {
         GlobalEventBus.on(EventName.DISCONNECT_NETWORK, this.onConnectionLost, this);
         GlobalEventBus.on(EventName.RECONNECT_NETWORK, this.onReconnection, this);
-        this.socketManager.on(EventName.TIMEOUT_CONNECTION, () => {
-            this.socketManager.emit("PLAYER_QUIT", {
-                playerId: this.playerId,
-                roomId: this.roomId
-            });
-            director.loadScene(SceneName.WAITING_ROOM)
-        });
-
 
         if (GameManger.Instance === null) GameManger.Instance = this; // singleton
 

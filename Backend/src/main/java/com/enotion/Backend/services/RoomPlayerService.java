@@ -38,25 +38,28 @@ public class RoomPlayerService implements IRoomPlayerService {
     @Override
     public RoomAndPlayerMV changeReady(RoomAndPlayerVM data) {
         Room room = roomRepository.findById(data.roomId()).orElseThrow();
-        if (data.isHost()) {
-            room.setState(RoomState.PLAYING);
-            room = roomRepository.save(room);
-        }
         Player player = playerRepository.findById(data.playerId()).orElseThrow();
         RoomPlayer roomPlayer = roomPlayerRepository.findByRoomAndPlayer(room, player);
         int quantityPresent = getPlayersInRoom(room.getId()).size();
         if (data.isHost()) {
             boolean startGame = true;
             List<RoomPlayer> list = roomPlayerRepository.findAllByRoomAndLeftAtIsNull(room);
-            for (RoomPlayer element : list) {
-                if (!element.isReady() && !element.getPlayer().getId().equals(data.playerId())) {
-                    startGame = false;
-                    break;
-                }
-            }
 
+            if(list.size() == room.getMaxPlayers()){
+                for (RoomPlayer element : list) {
+                    if (!element.isReady() && !element.getPlayer().getId().equals(data.playerId())) {
+                        startGame = false;
+                        break;
+                    }
+                }
+            } else {
+                startGame = false;
+            }
             if (!startGame) {
                 return new RoomAndPlayerMV(RoomMV.convertRoomMV(roomPlayer.getRoom(), quantityPresent), PlayerMV.convertPlayerMV(roomPlayer));
+            } else {
+                room.setState(RoomState.PLAYING);
+                room = roomRepository.save(room);
             }
         }
 
@@ -81,13 +84,10 @@ public class RoomPlayerService implements IRoomPlayerService {
         roomPlayer.setScore(gameOverMV.score());
         roomPlayer.setReady(!roomPlayer.isReady());
 
-//        if (roomPlayer.isHost()) {
-//            roomRepository.save(room);
-//        }
-
         byte[] image = decodeBase64Image(gameOverMV.imageBase64());
 
         roomPlayer.setImage(image);
+        roomPlayer.setUrlImage("http://localhost:8080/api/v1/view/" + player.getId());
 
         roomPlayer = roomPlayerRepository.save(roomPlayer);
         return LeaderBoardMV.converToLeaderBoardMV(roomPlayer);
