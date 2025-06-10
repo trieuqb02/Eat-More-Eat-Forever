@@ -66,14 +66,14 @@ export class GameManger extends Component {
 
         this.socketManager.on("FOOD_EATEN", (data) => {
             const { playerId, isMapping, score } = data;
-            if (playerId === this.playerId && this.snakeCtrl){
+            if (playerId === this.playerId && this.snakeCtrl && this.snakeCtrl.isOwner){
                 if (isMapping) {
                     this.snakeCtrl.grow();
                 } else {
-                    this.snakeCtrl.shrinkTail(3);
+                    this.snakeCtrl.shrinkTail(1);
                 } 
-                this.snakeCtrl.addScore(score);
-                UIManager.Instance.updateScore(playerId, this.snakeCtrl.score);
+                UIManager.Instance.setScore(score);
+                UIManager.Instance.updateScore(playerId, score);
                 return; 
             }
 
@@ -84,10 +84,9 @@ export class GameManger extends Component {
                     if (isMapping) {
                         snakeCtrl.grow();
                     } else {
-                        snakeCtrl.shrinkTail(3);
+                        snakeCtrl.shrinkTail(1);
                     }
-                    snakeCtrl.addScore(score);
-                    UIManager.Instance.updateScore(playerId, snakeCtrl.score);
+                    UIManager.Instance.updateScore(playerId, score);
                 }
             }
         });

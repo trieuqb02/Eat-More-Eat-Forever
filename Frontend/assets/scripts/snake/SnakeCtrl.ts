@@ -164,8 +164,8 @@ export class SnakeCtrl extends Component implements IAcceleratable, ISlowable {
         }
     }
 
-    addScore(amount){
-        this.score += amount;
+    setScore(score){
+        this.score = score;
         GameManger.Instance.setScore(this.score);
     }
 
