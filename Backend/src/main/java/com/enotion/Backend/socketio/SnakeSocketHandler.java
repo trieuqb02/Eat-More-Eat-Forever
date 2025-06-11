@@ -108,7 +108,7 @@ public class SnakeSocketHandler {
     private DataListener<StartGameVM> handleStartGame(SocketIOServer server) {
         return (client, data, ackSender) -> {
             String roomId = data.roomId();
-            int gameTime = 300;
+            int gameTime = 30;
 
             spawnPowerUp(server, roomId);
 
@@ -344,13 +344,6 @@ public class SnakeSocketHandler {
         int delay = ThreadLocalRandom.current().nextInt(3000, 7000);
         ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
         scheduler.schedule(() -> {
-
-            float x = (float) (Math.random() * 600 - 300);
-            float y = (float) (Math.random() * 400 - 200);
-            int powerUpType = PowerUpType.MYSTERY.getCode();
-            PowerUpMV spawnData = new PowerUpMV(powerUpType, x, y);
-            server.getRoomOperations(roomId).sendEvent("SPAWN_POWER_UP", spawnData);
-
             List<Vector2> spawnList = roomSpawnPositions.get(roomId);
             Set<Vector2> usedList = usedSpawnPositions.getOrDefault(roomId, new HashSet<>());
             Vector2 selected = null;

@@ -27,6 +27,15 @@ export class FoodSpawner extends Component {
         GameManger.Instance.socketManager.on(EventName.FOOD_REMOVED, this.FOOD_REMOVED);
 
         GameManger.Instance.socketManager.on(EventName.SPAWN_FOOD, this.SPAWN_FOOD);
+
+        const spawnPoints = this.posSpawnParents.children.map(node => {
+            return { x: node.position.x, y: node.position.y };
+        });
+
+        GameManger.Instance.socketManager.emit("SEND_SPAWN_POSITIONS", {
+            roomId: GameManger.Instance.roomId,
+            spawnPositions: spawnPoints
+        });
     }
 
     onFoodRemoved(type){
@@ -40,22 +49,6 @@ export class FoodSpawner extends Component {
     onSpawnFood(data){
         const { foodType, x, y } = data;
         this.spawnFood(foodType, new Vec3(x, y, 0));
-
-        GameManger.Instance.socketManager.on("SPAWN_FOOD", (data) => {
-            const { foodType, x, y } = data;
-            const pos = new Vec3(x, y, 0);
-            this.spawnFood(foodType, pos);
-        });
-
-        const spawnPoints = this.posSpawnParents.children.map(node => {
-            return { x: node.position.x, y: node.position.y };
-        });
-
-        GameManger.Instance.socketManager.emit("SEND_SPAWN_POSITIONS", {
-            roomId: GameManger.Instance.roomId,
-            spawnPositions: spawnPoints
-        });
-
     }
 
     spawnFood(type, position) {
