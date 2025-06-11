@@ -3,10 +3,13 @@ package com.enotion.Backend.socketio;
 import com.corundumstudio.socketio.SocketIOServer;
 import com.corundumstudio.socketio.listener.DataListener;
 import com.enotion.Backend.config.PlayerSessionStore;
+import com.enotion.Backend.entities.Room;
 import com.enotion.Backend.entities.RoomPlayer;
 import com.enotion.Backend.enums.EventName;
 import com.enotion.Backend.enums.PowerUpType;
+import com.enotion.Backend.enums.RoomState;
 import com.enotion.Backend.payload.*;
+import com.enotion.Backend.repositories.RoomRepository;
 import com.enotion.Backend.services.RoomPlayerService;
 import com.enotion.Backend.utils.GameStateUtils;
 import lombok.AccessLevel;
@@ -30,6 +33,7 @@ public class SnakeSocketHandler {
     RoomPlayerService roomPlayerService;
 
     PlayerSessionStore playerSessionStore;
+    private final RoomRepository roomRepository;
 
     public void registerHandlers(SocketIOServer server) {
         // event, type data receive, callback
@@ -37,6 +41,7 @@ public class SnakeSocketHandler {
         server.addEventListener("JOIN_GAME", JoinGameVM.class, handleJoinGame(server));
         server.addEventListener("FOOD_EATEN", FoodMV.class, handleFoodEaten(server));
         server.addEventListener("PLAYER_QUIT", PlayerLeaveVM.class, handlePlayerQuit(server));
+        server.addEventListener(EventName.SAVE_SCORE.name(), GameOverMV.class, handleSaveScore(server));
         server.addEventListener("SNAKE_DIED", PlayerLeaveVM.class, (client, data, ackSender) -> {
             server.getBroadcastOperations().sendEvent("SNAKE_DIED", data);
         });
@@ -106,13 +111,16 @@ public class SnakeSocketHandler {
     private DataListener<PlayerLeaveVM> handlePlayerQuit(SocketIOServer server) {
         return (client, data, ackSender) -> {
 
-            String playerId = String.valueOf(data.playerId());
-
             roomPlayerService.quitGame(data.roomId(), data.playerId());
 
-            playerSessionStore.remove(data.playerId().toString());
-
             client.leaveRoom(String.valueOf(data.roomId()));
+
+            if(server.getRoomOperations(String.valueOf(data.roomId())).getClients().isEmpty()){
+                Room room = roomRepository.findById(data.roomId()).orElseThrow();
+                room.setState(RoomState.CLOSE);
+                roomRepository.save(room);
+            }
+
             server.getRoomOperations(String.valueOf(data.roomId())).sendEvent("PLAYER_QUIT", data);
 
             server.getBroadcastOperations().sendEvent("PLAYER_QUIT", data);
@@ -131,7 +139,7 @@ public class SnakeSocketHandler {
 
             int amountScore = isMapping ? 10 : -10;
             int score = playerScores.getOrDefault(playerId, 0) + amountScore;
-            if(score <= 0){
+            if (score <= 0) {
                 score = 0;
             }
             playerScores.put(playerId, score);
@@ -211,7 +219,7 @@ public class SnakeSocketHandler {
 
 
             playerSessionStore.add(playerId, playerSession);
-            
+
 
             // emit others client has new client
             server.getRoomOperations(String.valueOf(data.roomId())).sendEvent("NEW_PLAYER_JOINED", joined);
@@ -266,8 +274,8 @@ public class SnakeSocketHandler {
         int delay = ThreadLocalRandom.current().nextInt(3000, 7000);
         ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
         scheduler.schedule(() -> {
-            float x = (float)(Math.random() * 600 - 300);
-            float y = (float)(Math.random() * 400 - 200);
+            float x = (float) (Math.random() * 600 - 300);
+            float y = (float) (Math.random() * 400 - 200);
             int powerUpType = PowerUpType.MYSTERY.getCode();
             PowerUpMV spawnData = new PowerUpMV(powerUpType, x, y);
             server.getRoomOperations(roomId).sendEvent("SPAWN_POWER_UP", spawnData);
@@ -276,5 +284,14 @@ public class SnakeSocketHandler {
 
     private void resetScore(String playerId) {
         playerScores.put(playerId, 0);
+    }
+
+    private DataListener<GameOverMV> handleSaveScore(SocketIOServer server) {
+        return (socketIOClient, data, ackSender) -> {
+            int score = playerScores.getOrDefault(data.playerId().toString(), 0);
+            roomPlayerService.update(data, score);
+            playerSessionStore.remove(data.playerId().toString());
+            socketIOClient.leaveRoom(data.roomId().toString());
+        };
     }
 }

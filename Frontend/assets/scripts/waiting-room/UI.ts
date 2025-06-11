@@ -1,6 +1,7 @@
 import {
   _decorator,
   Component,
+  director,
   instantiate,
   Label,
   Node,
@@ -10,6 +11,7 @@ import {
 import { Room } from "./Room";
 import { MessageManager } from "./MessageManager";
 import { WaitingRoomManager } from "./WaitingRoomManager";
+import { SceneName } from "../utils/SceneName";
 const { ccclass, property } = _decorator;
 
 @ccclass("UI")
@@ -65,5 +67,9 @@ export class UI extends Component {
   public refreshWaitingRoom(){
     this.listRoom.content.removeAllChildren();
     this.listRoom.getComponent(WaitingRoomManager).refreshWaitingRoom();
+  }
+
+  public clickBack(){
+    director.loadScene(SceneName.MENU)
   }
 }

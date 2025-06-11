@@ -4,5 +4,4 @@ export enum SceneName {
   PLAY_OFFLINE = "play-offline",
   MENU = "menu",
   MAIN = "main",
-  MAIN001 = "main-001",
 }

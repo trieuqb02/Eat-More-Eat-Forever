@@ -134,7 +134,6 @@ public class RoomService implements IRoomService {
 
         if(roomPlayer.isHost()){
             room.setState(RoomState.CLOSE);
-
             roomRepository.save(room);
         }
 

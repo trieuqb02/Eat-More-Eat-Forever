@@ -55,7 +55,6 @@ export class UICapture extends Component {
       return null;
     }
 
-    // Tạo canvas
     const canvas = document.createElement("canvas");
     canvas.width = width;
     canvas.height = height;
@@ -66,12 +65,11 @@ export class UICapture extends Component {
       return null;
     }
 
-    // Cocos trả pixel dạng RGBA, ngược chiều Y => cần đảo ngược hàng
     const imageData = ctx.createImageData(width, height);
     const rowBytes = width * 4;
 
     for (let y = 0; y < height; y++) {
-      const srcOffset = (height - y - 1) * rowBytes; // đảo chiều Y
+      const srcOffset = (height - y - 1) * rowBytes;
       const destOffset = y * rowBytes;
       imageData.data.set(
         pixels.subarray(srcOffset, srcOffset + rowBytes),
@@ -79,9 +77,79 @@ export class UICapture extends Component {
       );
     }
 
+    //   for (let y = 0; y < height; y++) {
+    //   const srcOffset = (height - y - 1) * rowBytes;
+    //   const destOffset = y * rowBytes;
+
+    //   if (
+    //     srcOffset + rowBytes <= pixels.length &&
+    //     destOffset + rowBytes <= imageData.data.length
+    //   ) {
+    //     imageData.data.set(
+    //       pixels.subarray(srcOffset, srcOffset + rowBytes),
+    //       destOffset
+    //     );
+    //   }
+    // }
+
     ctx.putImageData(imageData, 0, 0);
 
-    // Trả về Base64 PNG
     return canvas.toDataURL("image/png");
+  }
+
+  renderTextureToCompressedBase64(
+    renderTexture: RenderTexture
+  ): Promise<string | null> {
+    return new Promise((resolve) => {
+      const width = renderTexture.width;
+      const height = renderTexture.height;
+      const pixels = renderTexture.readPixels();
+
+      if (!pixels) {
+        resolve(null);
+        return;
+      }
+
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+
+      if (!ctx) {
+        resolve(null);
+        return;
+      }
+
+      const imageData = ctx.createImageData(width, height);
+      const rowBytes = width * 4;
+
+      for (let y = 0; y < height; y++) {
+        const srcOffset = (height - y - 1) * rowBytes;
+        const destOffset = y * rowBytes;
+        imageData.data.set(
+          pixels.subarray(srcOffset, srcOffset + rowBytes),
+          destOffset
+        );
+      }
+
+      ctx.putImageData(imageData, 0, 0);
+
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            resolve(null);
+            return;
+          }
+
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            resolve(reader.result as string);
+          };
+          reader.readAsDataURL(blob);
+        },
+        "image/jpeg",
+        0.7
+      );
+    });
   }
 }
