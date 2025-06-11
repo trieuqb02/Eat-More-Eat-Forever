@@ -83,6 +83,10 @@ public class RoomPlayerService implements IRoomPlayerService {
         RoomPlayer roomPlayer = roomPlayerRepository.findByRoomAndPlayer(room, player);
         roomPlayer.setScore(score);
         roomPlayer.setReady(!roomPlayer.isReady());
+        if(roomPlayer.isHost()){
+            room.setState(RoomState.CLOSE);
+            roomRepository.save(room);
+        }
 
         byte[] image = decodeBase64Image(gameOverMV.imageBase64());
 

@@ -63,7 +63,6 @@ public class RoomSocketHandler {
 
     private DataListener<RoomAndPlayerVM> startGame(SocketIOServer server) {
         return (socketIOClient, data, ackSender) -> {
-
             RoomAndPlayerMV roomAndPlayerMV = roomPlayerService.changeReady(data);
             if (ackSender.isAckRequested()) {
                 ackSender.sendAckData(ResponseState.CHANGE_READY_SUCCESSFULLY.getCode(), ResponseState.CHANGE_READY_SUCCESSFULLY.getMessage(), roomAndPlayerMV.player());
@@ -84,7 +83,6 @@ public class RoomSocketHandler {
         return (socketIOClient, data, ackSender) -> {
             RoomPlayer roomPlayer = roomService.removeRoom(data);
             if (roomPlayer.isHost()) {
-
                 server.getRoomOperations(String.valueOf(data.roomId())).getClients().forEach(client -> {
                     client.leaveRoom(String.valueOf(data.roomId()));
                     client.sendEvent(EventName.DISSOLVE_ROOM.name(), "dissolve room: " + roomPlayer.getRoom().getId());

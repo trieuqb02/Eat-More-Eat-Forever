@@ -5,10 +5,10 @@ import { EventName } from './utils/EventName';
 import { SnakeCtrl } from './snake/SnakeCtrl';
 import { DataManager } from './DataManager';
 import GlobalEventBus from './GlobalEventBus';
-import { SceneName } from './utils/SceneName';
 import { PowerUpType } from './power ups/PowerUpType';
 import { AccelerateEffect } from './power ups/Accelerate/AccelerateEffect';
 import { SlowEffect } from './power ups/Slow/SlowEffect';
+import { SceneName } from './utils/SceneName';
 const { ccclass, property } = _decorator;
 
 @ccclass('GameManger')
@@ -25,7 +25,7 @@ export class GameManger extends Component {
 
     private snakeCtrl: SnakeCtrl = null;
     public otherPlayers: Record<string, Node> = {};
-    private dataManager: DataManager = DataManager.getInstance()
+    private dataManager: DataManager = DataManager.getInstance();
 
     protected onLoad(): void {
         GlobalEventBus.on(EventName.DISCONNECT_NETWORK, this.onConnectionLost, this);
@@ -39,127 +39,21 @@ export class GameManger extends Component {
         this.roomId = roomAndPlayer.room.id;
         this.type =  roomAndPlayer.player.type;
 
-        this.socketManager.on("PLAYER_CREATED", (data) => {
-            const { playerId, x, y, rot, snakeType } = data;
-            this.spawnSnake(playerId, new Vec3(x, y, 0), snakeType); // own
-            UIManager.Instance.updateScore(playerId, 0);
-        });
+        this.socketManager.on(EventName.PLAYER_CREATED, this.PLAYER_CREATED);
 
-        this.socketManager.on("NEW_PLAYER_JOINED", (data) => {
-            const { playerId, x, y, rot, snakeType } = data;
-            if (playerId === this.playerId) return;
-            this.spawnOtherSnake(playerId, new Vec3(x, y, 0), snakeType); // another
-            UIManager.Instance.updateScore(playerId, 0);
-        });
+        this.socketManager.on(EventName.NEW_PLAYER_JOINED, this.NEW_PLAYER_JOINED);
 
-        this.socketManager.on(EventName.SNAKE_MOVED, (data) => {
-            const { id, x, y, rot } = data;
-            if (id === this.playerId) return;
+        this.socketManager.on(EventName.SNAKE_MOVED, this.SNAKE_MOVED);
 
-            const player = this.otherPlayers[id];
-            if (player) {
-                player.setPosition(new Vec3(x, y, 0));
-                player.setRotationFromEuler(0, 0, rot);
+        this.socketManager.on(EventName.FOOD_EATEN, this.FOOD_EATEN);
 
-                // save history other snake
-                const snakeCtrl = player.getComponent(SnakeCtrl);
-                if (snakeCtrl) {
-                    snakeCtrl.saveHistory(player.position.clone(), player.rotation.clone());
-                }
-            }
-        });
+        this.socketManager.on(EventName.SNAKE_DIED, this.SNAKE_DIED);
 
-        this.socketManager.on("FOOD_EATEN", (data) => {
-            const { playerId, isMapping, score } = data;
-            if (playerId === this.playerId && this.snakeCtrl && this.snakeCtrl.isOwner){
-                if (isMapping) {
-                    this.snakeCtrl.grow();
-                } else {
-                    this.snakeCtrl.shrinkTail(1);
-                } 
-                UIManager.Instance.setScore(score);
-                UIManager.Instance.updateScore(playerId, score);
-                return; 
-            }
+        this.socketManager.on(EventName.TIMER_COUNT, this.TIMER_COUNT);
 
-            const snakeNode = this.otherPlayers[playerId];
-            if (snakeNode) {
-                const snakeCtrl = snakeNode.getComponent(SnakeCtrl);
-                if (snakeCtrl) {
-                    if (isMapping) {
-                        snakeCtrl.grow();
-                    } else {
-                        snakeCtrl.shrinkTail(1);
-                    }
-                    UIManager.Instance.updateScore(playerId, score);
-                }
-            }
-        });
+        this.socketManager.on(EventName.GAME_OVER, this.GAME_OVER);
 
-        this.socketManager.on("SNAKE_DIED", (data) => {
-            const { playerId } = data;
-            const playerNode = this.otherPlayers[playerId];
-            if (playerNode) {
-                const snakeCtrl = playerNode.getComponent(SnakeCtrl);
-                if (snakeCtrl) snakeCtrl.destroySnake(); 
-                else playerNode.destroy(); // ensure destroy
-                delete this.otherPlayers[playerId];
-            }
-        });
-
-        this.socketManager.on("TIMER_COUNT", (timer) => {
-            UIManager.Instance.updateTimer(timer); 
-        });
-
-        this.socketManager.on("GAME_OVER", async () => {
-            UIManager.Instance.displayGameOverPanel(); 
-            this.scheduleOnce(()=>{
-                // destroy own snake
-                if (this.snakeCtrl) {
-                    this.snakeCtrl.destroySnake();
-                    this.snakeCtrl = null;
-                }
-                // destroy others snake
-                for (let playerId in this.otherPlayers) {
-                    const node = this.otherPlayers[playerId];
-                    if (!node) continue;
-                    
-                    const snakeCtrl = node.getComponent(SnakeCtrl);
-                    if (snakeCtrl) {
-                        snakeCtrl.destroySnake();
-                    } else {
-                        node.destroy();
-                    }
-                }
-                this.otherPlayers = {};
-            }, 0);
-
-            const base64Image = await UIManager.Instance.screenShot();
-            this.socketManager.emit("SAVE_SCORE", {
-                playerId: this.playerId,
-                roomId: this.roomId,
-                imageBase64: base64Image,
-            })
-            
-        });
-
-        this.socketManager.on("APPLY_EFFECT", (data) => {
-            const { playerId, effectType, duration } = data;
-
-            // own
-            if (playerId === this.playerId && this.snakeCtrl) {
-                this.applyEffectToSnake(this.snakeCtrl, effectType, duration);
-            }
-
-            // others
-            const otherSnake = this.otherPlayers[playerId];
-            if (otherSnake) {
-                const snakeCtrl = otherSnake.getComponent(SnakeCtrl);
-                if (snakeCtrl) {
-                    this.applyEffectToSnake(snakeCtrl, effectType, duration);
-                }
-            }
-        });
+        this.socketManager.on(EventName.APPLY_EFFECT, this.APPLY_EFFECT);
 
         // when Player quit game
         window.addEventListener("beforeunload", () => {
@@ -169,16 +63,7 @@ export class GameManger extends Component {
             });
         });
 
-        this.socketManager.on("PLAYER_QUIT", (data) => {
-            const { playerId } = data;
-            const playerNode = this.otherPlayers[playerId];
-            if (playerNode) {
-                const snakeCtrl = playerNode.getComponent(SnakeCtrl);
-                if (snakeCtrl) snakeCtrl.destroySnake(); 
-                else playerNode.destroy(); // ensure destroy
-                delete this.otherPlayers[playerId];
-            }
-        });
+        this.socketManager.on(EventName.PLAYER_QUIT, this.PLAYER_QUIT);
     }
 
     protected start() {
@@ -253,7 +138,148 @@ export class GameManger extends Component {
         UIManager.Instance.showDisconnectPanel();
     }
 
+    clickBackMenu(){
+        // this.dataManager.clear();
+        localStorage.clear();
+        director.resume();
+        director.preloadScene(SceneName.WAITING_ROOM, () => {
+            director.loadScene(SceneName.WAITING_ROOM);
+        });
+    }
+
+    private PLAYER_CREATED = this.onPlayerCreated.bind(this);
+    private NEW_PLAYER_JOINED = this.onNewPlayerJoined.bind(this);
+    private SNAKE_MOVED = this.onSnakeMove.bind(this);
+    private FOOD_EATEN = this.onFoodEaten.bind(this);
+    private SNAKE_DIED = this.onSnakeDied.bind(this);
+    private TIMER_COUNT = this.onTimerCount.bind(this);
+    private GAME_OVER = this.onGameOver.bind(this);
+    private APPLY_EFFECT = this.onApplyEffect.bind(this);
+    private PLAYER_QUIT = this.onPlayerQuit.bind(this);
+
+    onPlayerCreated(data){
+        const { playerId, x, y, rot, snakeType } = data;
+        this.spawnSnake(playerId, new Vec3(x, y, 0), snakeType);
+        UIManager.Instance.updateScore(playerId, 0);
+    }
+
+    onNewPlayerJoined(data){
+        const { playerId, x, y, rot, snakeType } = data;
+        if (playerId === this.playerId) return;
+        this.spawnOtherSnake(playerId, new Vec3(x, y, 0), snakeType);
+        UIManager.Instance.updateScore(playerId, 0);
+    }
+
+    onSnakeMove(data){
+        const { id, x, y, rot } = data;
+            if (id === this.playerId) return;
+
+            const player = this.otherPlayers[id];
+            if (player) {
+                player.setPosition(new Vec3(x, y, 0));
+                player.setRotationFromEuler(0, 0, rot);
+
+                // save history other snake
+                const snakeCtrl = player.getComponent(SnakeCtrl);
+                if (snakeCtrl) {
+                    snakeCtrl.saveHistory(player.position.clone(), player.rotation.clone());
+                }
+            }
+    }
+
+    onFoodEaten(data){
+        const { playerId, isMapping, score } = data;
+            if (playerId === this.playerId && this.snakeCtrl && this.snakeCtrl.isOwner){
+                if (isMapping) {
+                    this.snakeCtrl.grow();
+                } else {
+                    this.snakeCtrl.shrinkTail(1);
+                } 
+                UIManager.Instance.setScore(score);
+                UIManager.Instance.updateScore(playerId, score);
+                return; 
+            }
+
+            const snakeNode = this.otherPlayers[playerId];
+            if (snakeNode) {
+                const snakeCtrl = snakeNode.getComponent(SnakeCtrl);
+                if (snakeCtrl) {
+                    if (isMapping) {
+                        snakeCtrl.grow();
+                    } else {
+                        snakeCtrl.shrinkTail(1);
+                    }
+                    UIManager.Instance.updateScore(playerId, score);
+                }
+            }
+    }
+
+    onSnakeDied(data){
+        const { playerId } = data;
+        const playerNode = this.otherPlayers[playerId];
+        if (playerNode) {
+            const snakeCtrl = playerNode.getComponent(SnakeCtrl);
+            if (snakeCtrl) snakeCtrl.destroySnake(); 
+            else playerNode.destroy(); // ensure destroy
+            delete this.otherPlayers[playerId];
+        }
+    }
+
+    onTimerCount(timer){
+        UIManager.Instance.updateTimer(timer); 
+    }
+
+    async onGameOver(){
+        UIManager.Instance.displayGameOverPanel();  
+            const base64Image = await UIManager.Instance.screenShot();
+            this.socketManager.emit("SAVE_SCORE", {
+                playerId: this.playerId,
+                roomId: this.roomId,
+                imageBase64: base64Image,
+            })
+            director.pause();
+    }
+
+    onApplyEffect(data){
+        const { playerId, effectType, duration } = data;
+
+            // own
+            if (playerId === this.playerId && this.snakeCtrl) {
+                this.applyEffectToSnake(this.snakeCtrl, effectType, duration);
+            }
+
+            // others
+            const otherSnake = this.otherPlayers[playerId];
+            if (otherSnake) {
+                const snakeCtrl = otherSnake.getComponent(SnakeCtrl);
+                if (snakeCtrl) {
+                    this.applyEffectToSnake(snakeCtrl, effectType, duration);
+                }
+            }
+    }
+
+    onPlayerQuit(data){
+        const { playerId } = data;
+            const playerNode = this.otherPlayers[playerId];
+            if (playerNode) {
+                const snakeCtrl = playerNode.getComponent(SnakeCtrl);
+                if (snakeCtrl) snakeCtrl.destroySnake(); 
+                else playerNode.destroy(); // ensure destroy
+                delete this.otherPlayers[playerId];
+            }
+    }
+
     onDestroy() {
+        this.socketManager.off(EventName.PLAYER_CREATED, this.PLAYER_CREATED);
+        this.socketManager.off(EventName.NEW_PLAYER_JOINED, this.NEW_PLAYER_JOINED);
+        this.socketManager.off(EventName.SNAKE_MOVED, this.SNAKE_MOVED);
+        this.socketManager.off(EventName.FOOD_EATEN, this.FOOD_EATEN);
+        this.socketManager.off(EventName.SNAKE_DIED, this.SNAKE_DIED);
+        this.socketManager.off(EventName.TIMER_COUNT, this.TIMER_COUNT);
+        this.socketManager.off(EventName.GAME_OVER, this.GAME_OVER);
+        this.socketManager.off(EventName.APPLY_EFFECT, this.APPLY_EFFECT);
+        this.socketManager.off(EventName.PLAYER_QUIT, this.PLAYER_QUIT);
+
         GlobalEventBus.off(EventName.DISCONNECT_NETWORK, this.onConnectionLost, this);
         GlobalEventBus.off(EventName.RECONNECT_NETWORK, this.onReconnection, this);
         if (GameManger.Instance === this) 

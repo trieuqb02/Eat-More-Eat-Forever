@@ -74,7 +74,7 @@ public class SnakeSocketHandler {
     private DataListener<StartGameVM> handleStartGame(SocketIOServer server) {
         return (client, data, ackSender) -> {
             String roomId = data.roomId();
-            int gameTime = 20;
+            int gameTime = 10;
 
             spawnPowerUp(server, roomId);
 
@@ -276,13 +276,14 @@ public class SnakeSocketHandler {
 
     private void resetScore(String playerId) {
         playerScores.put(playerId, 0);
-
     }
 
     private DataListener<GameOverMV> handleSaveScore(SocketIOServer server) {
         return (socketIOClient, data, ackSender) -> {
-            int score = playerScores.get(data.playerId().toString());
+            int score = playerScores.getOrDefault(data.playerId().toString(), 0);
             roomPlayerService.update(data, score);
+            playerSessionStore.remove(data.playerId().toString());
+            socketIOClient.leaveRoom(data.roomId().toString());
         };
     }
 }

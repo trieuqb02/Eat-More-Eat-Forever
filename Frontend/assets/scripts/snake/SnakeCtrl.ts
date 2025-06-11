@@ -111,7 +111,6 @@ export class SnakeCtrl extends Component implements IAcceleratable, ISlowable {
         // collide other snake
         const tail = otherCollider.getComponent(SnakeTail); 
         if (tail) {
-            console.log("Collide tail");
             if (tail.playerId !== this.playerId) {
                 this.schedule(()=>{
                     this.destroySnake();

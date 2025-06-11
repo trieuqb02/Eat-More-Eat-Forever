@@ -116,6 +116,7 @@ export class RoomManager extends Component {
 
   leaveRoom(code: number, message: string, player: Player) {
     if (code == Code.SUCCESS) {
+      localStorage.clear();
       director.preloadScene(SceneName.WAITING_ROOM, () => {
         director.loadScene(SceneName.WAITING_ROOM);
       });
