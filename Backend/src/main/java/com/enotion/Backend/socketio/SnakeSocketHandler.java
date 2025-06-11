@@ -108,7 +108,7 @@ public class SnakeSocketHandler {
     private DataListener<StartGameVM> handleStartGame(SocketIOServer server) {
         return (client, data, ackSender) -> {
             String roomId = data.roomId();
-            int gameTime = 30;
+            int gameTime = 60;
 
             spawnPowerUp(server, roomId);
 

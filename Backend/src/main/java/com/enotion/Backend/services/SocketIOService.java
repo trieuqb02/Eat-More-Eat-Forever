@@ -101,34 +101,37 @@ public class SocketIOService {
 
     private void scheduleCheckingQuitedPlayer(String playerId, SocketIOClient client){
         Executors.newSingleThreadScheduledExecutor().schedule(() -> {
+            try {
+                PlayerSession session = playerSessionStore.get(playerId);
+                System.out.println("session " + session);
+                if (session != null && !session.isOnline()) {
 
-            PlayerSession session = playerSessionStore.get(playerId);
+                    RoomPlayer timedOutPlayer = roomPlayerService.getRoomPlayerByRoomIdAndPlayerId(
+                            UUID.fromString(session.getRoomId()),
+                            UUID.fromString(session.getPlayerId())
+                    );
 
-            if (session != null && !session.isOnline()) {
-                RoomPlayer timedOutPlayer = roomPlayerService.getRoomPlayerByRoomIdAndPlayerId(
-                        UUID.fromString(session.getRoomId()),
-                        UUID.fromString(session.getPlayerId())
-                );
+                    if (timedOutPlayer.getUrlImage() != null) {
+                        timedOutPlayer.setScore(0);
+                    }
+                    timedOutPlayer.setReady(!timedOutPlayer.isReady());
+                    roomPlayerRepository.save(timedOutPlayer);
 
-                if(timedOutPlayer.getUrlImage().isEmpty()){
-                    timedOutPlayer.setScore(0);
+                    Room room = roomRepository.findById(timedOutPlayer.getRoom().getId())
+                            .orElseThrow(() -> new IllegalStateException("Room not found"));
+
+                    List<RoomPlayer> roomPlayers = roomPlayerRepository.findAllByRoomAndLeftAtIsNull(room);
+
+                    if (roomPlayers.isEmpty()) {
+                        room.setState(RoomState.CLOSE);
+                        roomRepository.save(room);
+                    } else {
+                        handlePlayerTimeout(playerId);
+                    }
+                    playerSessionStore.remove(playerId);
                 }
-                timedOutPlayer.setReady(!timedOutPlayer.isReady());
-                roomPlayerRepository.save(timedOutPlayer);
-
-                Room room = roomRepository.findById(timedOutPlayer.getRoom().getId())
-                        .orElseThrow(() -> new IllegalStateException("Room not found"));
-
-                List<RoomPlayer> roomPlayers = roomPlayerRepository.findAllByRoomAndLeftAtIsNull(room);
-
-                if (roomPlayers.isEmpty()) {
-                    room.setState(RoomState.CLOSE);
-                    roomRepository.save(room);
-                } else {
-                    handlePlayerTimeout(playerId);
-                }
-
-                playerSessionStore.remove(playerId);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }, 5, TimeUnit.SECONDS);
     }

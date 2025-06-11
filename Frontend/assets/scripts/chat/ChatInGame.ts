@@ -52,7 +52,7 @@ export class ChatInGame extends Component {
     message(name: string, message: string, time: string,position: string){
         const chatMess = instantiate(this.chatMessage);
         const messageLB = chatMess.getChildByName("Message").getComponent(Label);
-        messageLB.string = `[${time}]${name}: ${message}`;
+        messageLB.string = `[${time}] ${name}: ${message}`;
         this.chatList.content.addChild(chatMess);
     }
 
