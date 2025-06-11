@@ -1,0 +1,134 @@
+{
+  "ver": "1.0.27",
+  "importer": "image",
+  "imported": true,
+  "uuid": "56119b99-0887-4624-adc8-9040eaa3e62c",
+  "files": [
+    ".json",
+    ".png"
+  ],
+  "subMetas": {
+    "6c48a": {
+      "importer": "texture",
+      "uuid": "56119b99-0887-4624-adc8-9040eaa3e62c@6c48a",
+      "displayName": "Door 4",
+      "id": "6c48a",
+      "name": "texture",
+      "userData": {
+        "wrapModeS": "clamp-to-edge",
+        "wrapModeT": "clamp-to-edge",
+        "imageUuidOrDatabaseUri": "56119b99-0887-4624-adc8-9040eaa3e62c",
+        "isUuid": true,
+        "visible": false,
+        "minfilter": "linear",
+        "magfilter": "linear",
+        "mipfilter": "none",
+        "anisotropy": 0
+      },
+      "ver": "1.0.22",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "f9941": {
+      "importer": "sprite-frame",
+      "uuid": "56119b99-0887-4624-adc8-9040eaa3e62c@f9941",
+      "displayName": "Door 4",
+      "id": "f9941",
+      "name": "spriteFrame",
+      "userData": {
+        "trimType": "auto",
+        "trimThreshold": 1,
+        "rotated": false,
+        "offsetX": 0,
+        "offsetY": 0.5,
+        "trimX": 0,
+        "trimY": 0,
+        "width": 802,
+        "height": 80,
+        "rawWidth": 802,
+        "rawHeight": 81,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "packable": true,
+        "pixelsToUnit": 100,
+        "pivotX": 0.5,
+        "pivotY": 0.5,
+        "meshType": 0,
+        "vertices": {
+          "rawPosition": [
+            -401,
+            -40,
+            0,
+            401,
+            -40,
+            0,
+            -401,
+            40,
+            0,
+            401,
+            40,
+            0
+          ],
+          "indexes": [
+            0,
+            1,
+            2,
+            2,
+            1,
+            3
+          ],
+          "uv": [
+            0,
+            81,
+            802,
+            81,
+            0,
+            1,
+            802,
+            1
+          ],
+          "nuv": [
+            0,
+            0.012345679012345678,
+            1,
+            0.012345679012345678,
+            0,
+            1,
+            1,
+            1
+          ],
+          "minPos": [
+            -401,
+            -40,
+            0
+          ],
+          "maxPos": [
+            401,
+            40,
+            0
+          ]
+        },
+        "isUuid": true,
+        "imageUuidOrDatabaseUri": "56119b99-0887-4624-adc8-9040eaa3e62c@6c48a",
+        "atlasUuid": ""
+      },
+      "ver": "1.0.12",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "type": "sprite-frame",
+    "hasAlpha": true,
+    "fixAlphaTransparencyArtifacts": false,
+    "redirect": "56119b99-0887-4624-adc8-9040eaa3e62c@6c48a"
+  }
+}

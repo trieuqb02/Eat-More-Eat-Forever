@@ -41,8 +41,8 @@
     },
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": 191.444,
-      "y": -165.218,
+      "x": 296.75,
+      "y": -57.671,
       "z": 0
     },
     "_lrot": {
@@ -54,8 +54,8 @@
     },
     "_lscale": {
       "__type__": "cc.Vec3",
-      "x": 0.548,
-      "y": 0.548,
+      "x": 0.576,
+      "y": 0.576,
       "z": 0.548
     },
     "_mobility": 0,
@@ -113,13 +113,13 @@
     "_dstBlendFactor": 4,
     "_color": {
       "__type__": "cc.Color",
-      "r": 10,
+      "r": 255,
       "g": 255,
-      "b": 0,
+      "b": 255,
       "a": 255
     },
     "_spriteFrame": {
-      "__uuid__": "7d8f9b89-4fd1-4c9f-a3ab-38ec7cded7ca@f9941",
+      "__uuid__": "da1ab983-07e4-4937-9e29-3393a1a46ec5@f9941",
       "__expectedType__": "cc.SpriteFrame"
     },
     "_type": 0,
@@ -154,6 +154,7 @@
       "__id__": 7
     },
     "foodType": 1,
+    "_scoreAmount": 10,
     "_id": ""
   },
   {
@@ -185,8 +186,8 @@
     },
     "_size": {
       "__type__": "cc.Size",
-      "width": 100,
-      "height": 100
+      "width": 80,
+      "height": 80
     },
     "_id": ""
   },
@@ -237,7 +238,6 @@
       "__id__": 0
     },
     "fileId": "505ZQ9Yk9Eeb5p/WxYRAOK",
-    "instance": null,
     "targetOverrides": null
   }
 ]

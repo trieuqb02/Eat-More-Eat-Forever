@@ -16,6 +16,7 @@ export class PowerUpSpawner extends Component {
     private POWER_UP_REMOVED = this.onPowerUpRemove.bind(this);
     
     protected start(): void {
+
         GameManger.Instance.socketManager.on(EventName.SPAWN_POWER_UP, this.SPAWN_POWER_UP);
 
         GameManger.Instance.socketManager.on(EventName.POWER_UP_REMOVED, this.POWER_UP_REMOVED);
@@ -29,18 +30,16 @@ export class PowerUpSpawner extends Component {
     onPowerUpRemove(type){
         if(this.activePwUps.size == 0) return;
             
-        const pwNode = this.activePwUps.get(type);
-        if (pwNode) {
-            console.log("pw remove");
-            pwNode.destroy();
-            this.activePwUps.delete(type);
-        }
+            const pwNode = this.activePwUps.get(type);
+            if (pwNode) {
+                pwNode.destroy();
+                this.activePwUps.delete(type);
+            }
     }
 
 
 
     spawn(type, position) {
-        console.log("pw type: " + type);
         if (this.activePwUps.has(type)) return;
         if (!this.pwPrefab) return;
         const pw = instantiate(this.pwPrefab);

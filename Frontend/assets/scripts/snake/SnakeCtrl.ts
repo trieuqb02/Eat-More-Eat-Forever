@@ -12,6 +12,7 @@ import { EffectCtrl } from '../power ups/EffectCtrl';
 import { PowerUp } from '../power ups/PowerUp';
 import { IAcceleratable } from '../power ups/Accelerate/IAcceleratable';
 import { ISlowable } from '../power ups/Slow/ISlowable';
+import { ColliderGroup } from '../ColliderGroup';
 const { ccclass, property } = _decorator; 
 
 
@@ -103,6 +104,7 @@ export class SnakeCtrl extends Component implements IAcceleratable, ISlowable {
         if (food) {
             GameManger.Instance.socketManager.emit(EventName.FOOD_EATEN, {
                 playerId: GameManger.Instance.playerId,
+                roomId: GameManger.Instance.roomId,
                 snakeType: this.snakeType,
                 foodType: food.foodType 
             });
@@ -112,7 +114,7 @@ export class SnakeCtrl extends Component implements IAcceleratable, ISlowable {
         const tail = otherCollider.getComponent(SnakeTail); 
         if (tail) {
             if (tail.playerId !== this.playerId) {
-                this.schedule(()=>{
+                this.scheduleOnce(()=>{
                     this.destroySnake();
                 }, 0)
 
@@ -132,6 +134,17 @@ export class SnakeCtrl extends Component implements IAcceleratable, ISlowable {
                 roomId: GameManger.Instance.roomId,
                 powerUpType: powerUp.powerUpType,
                 duration: powerUp.duration,
+            });
+        }
+
+        if (otherCollider.group === ColliderGroup.OBSTACLE) {
+            this.scheduleOnce(()=>{
+                this.destroySnake();
+            }, 0)
+
+            // emit server
+            GameManger.Instance.socketManager.emit("SNAKE_DIED", {
+                playerId: this.playerId,
             });
         }
     }

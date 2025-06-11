@@ -10,6 +10,8 @@ export class FoodSpawner extends Component {
 
     @property({ type: [Prefab] })
     foodPrefabs: Prefab[] = [];
+    @property(Node)
+    posSpawnParents: Node;
 
     private activeFoods: Map<EntityType, Node> = new Map();
 
@@ -38,6 +40,22 @@ export class FoodSpawner extends Component {
     onSpawnFood(data){
         const { foodType, x, y } = data;
         this.spawnFood(foodType, new Vec3(x, y, 0));
+
+        GameManger.Instance.socketManager.on("SPAWN_FOOD", (data) => {
+            const { foodType, x, y } = data;
+            const pos = new Vec3(x, y, 0);
+            this.spawnFood(foodType, pos);
+        });
+
+        const spawnPoints = this.posSpawnParents.children.map(node => {
+            return { x: node.position.x, y: node.position.y };
+        });
+
+        GameManger.Instance.socketManager.emit("SEND_SPAWN_POSITIONS", {
+            roomId: GameManger.Instance.roomId,
+            spawnPositions: spawnPoints
+        });
+
     }
 
     spawnFood(type, position) {
