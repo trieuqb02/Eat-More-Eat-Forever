@@ -1,7 +1,7 @@
 [
   {
     "__type__": "cc.Prefab",
-    "_name": "Green Food",
+    "_name": "Yellow Food",
     "_objFlags": 0,
     "__editorExtras__": {},
     "_native": "",
@@ -13,7 +13,7 @@
   },
   {
     "__type__": "cc.Node",
-    "_name": "Green Food",
+    "_name": "Yellow Food",
     "_objFlags": 0,
     "__editorExtras__": {},
     "_parent": null,
@@ -41,8 +41,8 @@
     },
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": 296.75,
-      "y": -57.671,
+      "x": 299.945,
+      "y": 25.766,
       "z": 0
     },
     "_lrot": {
@@ -94,7 +94,7 @@
   },
   {
     "__type__": "cc.CompPrefabInfo",
-    "fileId": "0acJOBazdMkYDWM6qFpyzD"
+    "fileId": "27UNsboyJOY7pJSXXs6Cl4"
   },
   {
     "__type__": "cc.Sprite",
@@ -119,7 +119,7 @@
       "a": 255
     },
     "_spriteFrame": {
-      "__uuid__": "da1ab983-07e4-4937-9e29-3393a1a46ec5@f9941",
+      "__uuid__": "374509d9-723f-40e1-ae18-ab67d41afdc7@f9941",
       "__expectedType__": "cc.SpriteFrame"
     },
     "_type": 0,
@@ -139,7 +139,7 @@
   },
   {
     "__type__": "cc.CompPrefabInfo",
-    "fileId": "beZXfJKnNMcZQ1J+zdcQL7"
+    "fileId": "e77WsLm2xD2Zm+477S1b+k"
   },
   {
     "__type__": "a5259Hae8tIvYANqlIjuMrU",
@@ -153,13 +153,13 @@
     "__prefab": {
       "__id__": 7
     },
-    "foodType": 1,
+    "foodType": 3,
     "_scoreAmount": 10,
     "_id": ""
   },
   {
     "__type__": "cc.CompPrefabInfo",
-    "fileId": "b9cSKOI3lMKLQAmH66mpWy"
+    "fileId": "77HufgWFtAkJ6nBFJP4ler"
   },
   {
     "__type__": "cc.BoxCollider2D",
@@ -193,7 +193,7 @@
   },
   {
     "__type__": "cc.CompPrefabInfo",
-    "fileId": "8dKM2EQBZB3aDy8Yv9TPO0"
+    "fileId": "8fggMKruxHGb/qprkTkN8y"
   },
   {
     "__type__": "cc.RigidBody2D",
@@ -227,7 +227,7 @@
   },
   {
     "__type__": "cc.CompPrefabInfo",
-    "fileId": "b1QPo7aD9PcYGipm6eIJHy"
+    "fileId": "44VI8aAhRMPL647xkh8rZo"
   },
   {
     "__type__": "cc.PrefabInfo",
@@ -237,7 +237,7 @@
     "asset": {
       "__id__": 0
     },
-    "fileId": "505ZQ9Yk9Eeb5p/WxYRAOK",
+    "fileId": "85VVmUHD9JQ69gwYg1PWWz",
     "targetOverrides": null
   }
 ]

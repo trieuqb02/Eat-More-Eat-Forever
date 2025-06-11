@@ -13,17 +13,14 @@ export class PowerUpSpawner extends Component {
     protected start(): void {
         GameManger.Instance.socketManager.on("SPAWN_POWER_UP", (data) => {
             const { pwType, x, y } = data;
-            console.log("spawn pw");
             this.spawn(pwType, new Vec3(x, y, 0));
         });
 
         GameManger.Instance.socketManager.on("POWER_UP_REMOVED", (type: number) => {
-            console.log("pw remove event");
             if(this.activePwUps.size == 0) return;
             
             const pwNode = this.activePwUps.get(type);
             if (pwNode) {
-                console.log("pw remove");
                 pwNode.destroy();
                 this.activePwUps.delete(type);
             }
@@ -31,7 +28,6 @@ export class PowerUpSpawner extends Component {
     }
 
     spawn(type, position) {
-        console.log("pw type: " + type);
         if (this.activePwUps.has(type)) return;
         if (!this.pwPrefab) return;
         const pw = instantiate(this.pwPrefab);

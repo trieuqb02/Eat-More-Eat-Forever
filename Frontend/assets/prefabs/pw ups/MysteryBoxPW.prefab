@@ -54,9 +54,9 @@
     },
     "_lscale": {
       "__type__": "cc.Vec3",
-      "x": 1,
-      "y": 1,
-      "z": 1
+      "x": 0.613,
+      "y": 0.613,
+      "z": 1.064
     },
     "_mobility": 0,
     "_layer": 33554432,
@@ -113,13 +113,13 @@
     "_dstBlendFactor": 4,
     "_color": {
       "__type__": "cc.Color",
-      "r": 238,
-      "g": 121,
-      "b": 215,
+      "r": 255,
+      "g": 255,
+      "b": 255,
       "a": 255
     },
     "_spriteFrame": {
-      "__uuid__": "7d8f9b89-4fd1-4c9f-a3ab-38ec7cded7ca@f9941",
+      "__uuid__": "d7631403-6796-49b5-adda-a73fe19c67af@f9941",
       "__expectedType__": "cc.SpriteFrame"
     },
     "_type": 0,
@@ -161,13 +161,13 @@
     "_restitution": 0,
     "_offset": {
       "__type__": "cc.Vec2",
-      "x": 0,
-      "y": 0
+      "x": -3,
+      "y": -2.6
     },
     "_size": {
       "__type__": "cc.Size",
-      "width": 100,
-      "height": 100
+      "width": 78.2,
+      "height": 75.9
     },
     "_id": ""
   },
@@ -238,6 +238,7 @@
       "__id__": 0
     },
     "fileId": "52K8yZSQdOoqH2cqoEgFG8",
+    "instance": null,
     "targetOverrides": null
   }
 ]
