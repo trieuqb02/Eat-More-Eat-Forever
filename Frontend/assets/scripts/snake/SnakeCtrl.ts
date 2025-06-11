@@ -121,7 +121,7 @@ export class SnakeCtrl extends Component implements IAcceleratable, ISlowable {
                 // emit server
                 GameManger.Instance.socketManager.emit(EventName.SNAKE_DIED, {
                     playerId: this.playerId,
-                    killedBy: tail.playerId
+                    roomId: GameManger.Instance.roomId,
                 });
             }
         }
@@ -143,8 +143,9 @@ export class SnakeCtrl extends Component implements IAcceleratable, ISlowable {
             }, 0)
 
             // emit server
-            GameManger.Instance.socketManager.emit("SNAKE_DIED", {
+            GameManger.Instance.socketManager.emit(EventName.SNAKE_DIED, {
                 playerId: this.playerId,
+                roomId: GameManger.Instance.roomId,
             });
         }
     }

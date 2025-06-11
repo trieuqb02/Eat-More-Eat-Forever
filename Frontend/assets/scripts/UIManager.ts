@@ -1,4 +1,4 @@
-import { _decorator, Color, Component, Game, instantiate, Label, Node, Prefab, tween, Vec3 } from 'cc';
+import { _decorator, Color, Component, instantiate, Label, Node, Prefab, tween, Vec3 } from 'cc';
 import { GameManger } from './GameManger';
 import { UICapture } from './UICapture';
 const { ccclass, property } = _decorator;
@@ -71,7 +71,7 @@ export class UIManager extends Component {
         const sortedPlayers = Array.from(this.playerScores.entries())
             .sort((a, b) => b[1] - a[1]);
 
-        const itemHeight = 60;
+        const itemHeight = 35;
         sortedPlayers.forEach(([id], index) => {
             const lbl = this.playerLabels.get(id);
             if (lbl && lbl.node) {
@@ -99,14 +99,17 @@ export class UIManager extends Component {
     displayGameOverPanel(){
         const myId = GameManger.Instance.playerId;
         const myScore = this.playerScores.get(myId) || 0;
-
-        // Sort 
         const sorted = Array.from(this.playerScores.entries())
-            .sort((a, b) => b[1] - a[1]);
+                .sort((a, b) => b[1] - a[1]);
 
-        // check win
-        const topId = sorted[0][0];
-        const isWin = topId === myId;
+        let isWin = false;
+        if (GameManger.Instance.winnerId) {
+            isWin = GameManger.Instance.winnerId === myId;
+        } else {
+            // check win
+            const topId = sorted[0][0];
+            isWin = topId === myId;
+        }
 
         this.gameOverResult.string = isWin ? "YOU WIN!" : "YOU LOSE!";
         this.gameOverResult.color = isWin ? new Color(255, 215, 0) : new Color(255, 80, 80);
@@ -118,19 +121,8 @@ export class UIManager extends Component {
 
         sorted.forEach(([id, score], index) => {
             const item = instantiate(this.rankingItemPrefab);
-            //const icon = item.getChildByName("Icon")?.getComponent(Sprite);
             const nameLabel = item.getChildByName("Name")?.getComponent(Label);
             const scoreLabel = item.getChildByName("Score")?.getComponent(Label);
-
-            // Icon top 3
-            // if (icon) {
-            //     switch (index) {
-            //         case 0: icon.spriteFrame = this.goldSprite; break;
-            //         case 1: icon.spriteFrame = this.silverSprite; break;
-            //         case 2: icon.spriteFrame = this.bronzeSprite; break;
-            //         default: icon.node.active = false; break;
-            //     }
-            // }
 
             // name
             const nameStr = (id === myId) ? `${id.substring(0, 5)} (YOU)` : id.substring(0, 5);

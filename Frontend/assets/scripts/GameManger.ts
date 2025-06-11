@@ -15,9 +15,12 @@ const { ccclass, property } = _decorator;
 export class GameManger extends Component {
     public static Instance: GameManger = null;
     socketManager = SocketManager.getInstance();
-    playerId: String;
-    roomId: String;
-    type: String;
+    playerId: String = "";
+    roomId: String = "";
+    type: String = "";
+    winnerId: String | null = null;
+
+    types: any[] = [ {id: "RED", pos: 0},{id: "GREEN", pos: 1},{id: "BLUE", pos: 2},{id: "YELLOW", pos: 3} ]
 
     @property({ type: [Prefab] })
     snakePrefabs: Prefab[] = [];
@@ -30,6 +33,17 @@ export class GameManger extends Component {
     private dataManager: DataManager = DataManager.getInstance();
 
     private pingStart = 0;
+
+    private PLAYER_CREATED = this.onPlayerCreated.bind(this);
+    private NEW_PLAYER_JOINED = this.onNewPlayerJoined.bind(this);
+    private SNAKE_MOVED = this.onSnakeMove.bind(this);
+    private FOOD_EATEN = this.onFoodEaten.bind(this);
+    private SNAKE_DIED = this.onSnakeDied.bind(this);
+    private TIMER_COUNT = this.onTimerCount.bind(this);
+    private GAME_OVER = this.onGameOver.bind(this);
+    private APPLY_EFFECT = this.onApplyEffect.bind(this);
+    private PLAYER_QUIT = this.onPlayerQuit.bind(this);
+    private PONG_CHECK = this.onPongCheck.bind(this);
 
     protected onLoad(): void {
         GlobalEventBus.on(EventName.DISCONNECT_NETWORK, this.onConnectionLost, this);
@@ -44,26 +58,17 @@ export class GameManger extends Component {
         this.type =  roomAndPlayer.player.type;
 
         this.socketManager.on(EventName.PLAYER_CREATED, this.PLAYER_CREATED);
-
         this.socketManager.on(EventName.NEW_PLAYER_JOINED, this.NEW_PLAYER_JOINED);
-
         this.socketManager.on(EventName.SNAKE_MOVED, this.SNAKE_MOVED);
-
         this.socketManager.on(EventName.FOOD_EATEN, this.FOOD_EATEN);
-
         this.socketManager.on(EventName.SNAKE_DIED, this.SNAKE_DIED);
-
         this.socketManager.on(EventName.TIMER_COUNT, this.TIMER_COUNT);
-
         this.socketManager.on(EventName.GAME_OVER, this.GAME_OVER);
-
         this.socketManager.on(EventName.APPLY_EFFECT, this.APPLY_EFFECT);
-
         this.socketManager.on(EventName.PLAYER_QUIT, this.PLAYER_QUIT);
+        this.socketManager.on(EventName.PONG_CHECK, this.PONG_CHECK);
 
         this.schedule(this.sendPing, 2);
-
-        this.socketManager.on(EventName.PONG_CHECK, this.PONG_CHECK);
         
         window.addEventListener("beforeunload", () => {
             this.socketManager.emit(EventName.PLAYER_QUIT, {
@@ -74,7 +79,7 @@ export class GameManger extends Component {
     }
 
     protected start() {
-        this.socketManager.emit("JOIN_GAME", { playerId: this.playerId, roomId: this.roomId, type: this.type});
+        this.socketManager.emit(EventName.JOIN_GAME, { playerId: this.playerId, roomId: this.roomId, type: this.type});
     }
 
     onPongCheck(){
@@ -110,39 +115,38 @@ export class GameManger extends Component {
         return this.snakeCtrl.score;
     }
     
-    arr: any[] = [ {id: "RED", pos: 0},{id: "GREEN", pos: 1},{id: "BLUE", pos: 2},{id: "YELLOW", pos: 3} ]
-
-    spawnSnake(id, pos, snakeType) {
+    getIndexByType(snakeType){
         let type;
-        this.arr.forEach(ele => {
+        this.types.forEach(ele => {
             if(ele.id == snakeType){
                 type = ele.pos
+                return type;
             }
         })
+        return -1;
+    }
+
+    spawnSnake(id, pos, snakeType) {
+        const type = this.getIndexByType(snakeType);
+        
         const snakeNode = instantiate(this.snakePrefabs[type]);
         snakeNode.setPosition(pos);
         this.node.addChild(snakeNode);
 
         this.snakeCtrl = snakeNode.getComponent(SnakeCtrl);
-        //this.snakeCtrl.enabled = true;
         this.snakeCtrl.isOwner = true;
         this.snakeCtrl.playerId = this.playerId;
     }
 
     spawnOtherSnake(id, pos, snakeType) {
-        let type;
-        this.arr.forEach(ele => {
-            if(ele.id == snakeType){
-                type = ele.pos
-            }
-        })
+        const type = this.getIndexByType(snakeType);
+
         const snakeNode = instantiate(this.snakePrefabs[type]);
         snakeNode.setPosition(pos);
         this.node.addChild(snakeNode);
         this.otherPlayers[id] = snakeNode;
 
         const ctrl = snakeNode.getComponent(SnakeCtrl);
-        //ctrl.enabled = false;
         ctrl.isOwner = false;
         ctrl.playerId = id;
     }
@@ -158,7 +162,6 @@ export class GameManger extends Component {
     }
 
     clickBackMenu(){
-        // this.dataManager.clear();
         localStorage.clear();
         director.resume();
         director.preloadScene(SceneName.WAITING_ROOM, () => {
@@ -166,25 +169,13 @@ export class GameManger extends Component {
         });
     }
 
-   quitGame(){
+    quitGame(){
         this.socketManager.emit(EventName.PLAYER_QUIT, {
             playerId: this.playerId,
             roomId: this.roomId
         });
-    director.loadScene(SceneName.WAITING_ROOM);
+        director.loadScene(SceneName.WAITING_ROOM);
     }
-
-    private PLAYER_CREATED = this.onPlayerCreated.bind(this);
-    private NEW_PLAYER_JOINED = this.onNewPlayerJoined.bind(this);
-    private SNAKE_MOVED = this.onSnakeMove.bind(this);
-    private FOOD_EATEN = this.onFoodEaten.bind(this);
-    private SNAKE_DIED = this.onSnakeDied.bind(this);
-    private TIMER_COUNT = this.onTimerCount.bind(this);
-    private GAME_OVER = this.onGameOver.bind(this);
-    private APPLY_EFFECT = this.onApplyEffect.bind(this);
-    private PLAYER_QUIT = this.onPlayerQuit.bind(this);
-
-    private PONG_CHECK = this.onPongCheck.bind(this);
 
     onPlayerCreated(data){
         const { playerId, x, y, rot, snakeType } = data;
@@ -201,20 +192,19 @@ export class GameManger extends Component {
 
     onSnakeMove(data){
         const { id, x, y, rot, roomId } = data;
-            if (id === this.playerId) return;
+        if (id === this.playerId) return;
 
-            const player = this.otherPlayers[id];
-            if (player) {
-                player.setPosition(new Vec3(x, y, 0));
-                player.setRotationFromEuler(0, 0, rot);
+        const player = this.otherPlayers[id];
+        if (player) {
+            player.setPosition(new Vec3(x, y, 0));
+            player.setRotationFromEuler(0, 0, rot);
 
-                // save history other snake
-                const snakeCtrl = player.getComponent(SnakeCtrl);
-                if (snakeCtrl) {
-                    snakeCtrl.saveHistory(player.position.clone(), player.rotation.clone());
-
-                }
+            // save history other snake
+            const snakeCtrl = player.getComponent(SnakeCtrl);
+            if (snakeCtrl) {
+                snakeCtrl.saveHistory(player.position.clone(), player.rotation.clone());
             }
+        }
     }
 
     onFoodEaten(data){
@@ -259,15 +249,16 @@ export class GameManger extends Component {
         UIManager.Instance.updateTimer(timer); 
     }
 
-    async onGameOver(){
+    async onGameOver(winnerId){
+        this.winnerId = winnerId;
         UIManager.Instance.displayGameOverPanel();  
-            const base64Image = await UIManager.Instance.screenShot();
-            this.socketManager.emit("SAVE_SCORE", {
-                playerId: this.playerId,
-                roomId: this.roomId,
-                imageBase64: base64Image,
-            })
-            director.pause();
+        const base64Image = await UIManager.Instance.screenShot();
+        this.socketManager.emit(EventName.SAVE_SCORE, {
+            playerId: this.playerId,
+            roomId: this.roomId,
+            imageBase64: base64Image,
+        })
+        director.pause();
     }
 
     onApplyEffect(data){

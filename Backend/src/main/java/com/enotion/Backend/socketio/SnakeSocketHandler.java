@@ -36,86 +36,47 @@ public class SnakeSocketHandler {
     Map<String, List<Vector2>> roomSpawnPositions = new HashMap<>();
     Map<String, Set<Vector2>> usedSpawnPositions = new HashMap<>();
     Map<String, Vector2> activePowerUpPositions = new HashMap<>();
+    Map<String, Set<String>> alivePlayers = new ConcurrentHashMap<>();
 
     RoomPlayerService roomPlayerService;
 
     PlayerSessionStore playerSessionStore;
     private final RoomRepository roomRepository;
 
+    int GAME_TIME = 30;
+    int AMOUNT_SCORE = 10;
+    int SPAWN_FOOD_DURATION = 1500;
+
     public void registerHandlers(SocketIOServer server) {
         // event, type data receive, callback
         server.addEventListener(EventName.MOVE.name(), SnakeVM.class, handleMove(server));
-        server.addEventListener("JOIN_GAME", JoinGameVM.class, handleJoinGame(server));
-        server.addEventListener("FOOD_EATEN", FoodMV.class, handleFoodEaten(server));
-        server.addEventListener("PLAYER_QUIT", PlayerLeaveVM.class, handlePlayerQuit(server));
+        server.addEventListener(EventName.JOIN_GAME.name(), JoinGameVM.class, handleJoinGame(server));
+        server.addEventListener(EventName.FOOD_EATEN.name(), FoodMV.class, handleFoodEaten(server));
+        server.addEventListener(EventName.PLAYER_QUIT.name(), PlayerLeaveVM.class, handlePlayerQuit(server));
         server.addEventListener(EventName.SAVE_SCORE.name(), GameOverMV.class, handleSaveScore(server));
-        server.addEventListener("SNAKE_DIED", PlayerLeaveVM.class, (client, data, ackSender) -> {
-            server.getBroadcastOperations().sendEvent("SNAKE_DIED", data);
-        });
-        server.addEventListener("START_GAMEPLAY", StartGameVM.class, handleStartGame(server));
+        server.addEventListener(EventName.SNAKE_DIED.name(), PlayerLeaveVM.class, handleSnakeDie(server));
+        server.addEventListener(EventName.START_GAMEPLAY.name(), StartGameVM.class, handleStartGame(server));
         server.addEventListener(EventName.REJOIN_GAME.name(), RoomAndPlayerVM.class, handleRejoinGame(server));
-        server.addEventListener("POWER_UP_COLLECTED", PowerUpCollectedVM.class, (client, data, ackSender) -> {
-            String playerId = data.playerId();
-            String roomId = data.roomId();
-            int powerUpType = data.powerUpType();
-            int duration = data.duration();
-
-            // Reset old pos
-            Vector2 oldPos = activePowerUpPositions.get(roomId);
-            if (oldPos != null) {
-                Set<Vector2> usedList = usedSpawnPositions.getOrDefault(roomId, new HashSet<>());
-                usedList.remove(oldPos);
-                usedSpawnPositions.put(roomId, usedList);
-                activePowerUpPositions.remove(roomId);
-            }
-
-            // remove
-            server.getRoomOperations(roomId).sendEvent("POWER_UP_REMOVED", powerUpType);
-            spawnPowerUp(server, roomId);
-
-            PowerUpType type;
-            try {
-                type = PowerUpType.fromCode(powerUpType);
-            } catch (IllegalArgumentException e) {
-                System.err.println("Invalid PowerUpType from client");
-                return;
-            }
-
-            PowerUpType effectToApply = type;
-            if (type == PowerUpType.MYSTERY) {
-                effectToApply = PowerUpType.getRandomBasicEffect();
-            }
-
-            PowerUpEffectMV effectData = new PowerUpEffectMV(playerId, effectToApply.getCode(), duration);
-            server.getRoomOperations(roomId).sendEvent("APPLY_EFFECT", effectData);
-        });
-
-        server.addEventListener("SEND_SPAWN_POSITIONS", SpawnPositionsVM.class, (client, data, ackSender) -> {
-            String roomId = data.roomId();
-            ArrayNode positions = data.spawnPositions();
-
-            List<Vector2> posList = new ArrayList<>();
-            for (JsonNode pos : positions) {
-                float x = (float) pos.get("x").asDouble();
-                float y = (float) pos.get("y").asDouble();
-                posList.add(new Vector2(x, y));
-            }
-
-            roomSpawnPositions.put(roomId, posList);
-        });
+        server.addEventListener(EventName.POWER_UP_COLLECTED.name(), PowerUpCollectedVM.class, handlePowerUpCollected(server));
+        server.addEventListener(EventName.SEND_SPAWN_POSITIONS.name(), SpawnPositionsVM.class, handleSpawnPosition(server));
     }
 
     private DataListener<StartGameVM> handleStartGame(SocketIOServer server) {
         return (client, data, ackSender) -> {
             String roomId = data.roomId();
-            int gameTime = 30;
+            String playerId = data.playerId();
 
             spawnPowerUp(server, roomId);
+            // spawn food
+            // host -> spawn all food
+            if (activeFoods.isEmpty()) {
+                spawnInitialFoods(server, playerId, roomId);
+            }
 
             // check had
             if (gameTimers.containsKey(roomId)) return;
 
-            roomTimers.put(roomId, gameTime);
+            roomTimers.put(roomId, GAME_TIME);
 
             ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
             gameTimers.put(roomId, scheduler);
@@ -125,142 +86,43 @@ public class SnakeSocketHandler {
 
                 if (timer >= 0) {
                     roomTimers.put(roomId, timer);
-                    server.getRoomOperations(roomId).sendEvent("TIMER_COUNT", timer);
+                    server.getRoomOperations(roomId).sendEvent(EventName.TIMER_COUNT.name(), timer);
                 }
 
                 if (timer <= 0) {
                     scheduler.shutdown();
                     gameTimers.remove(roomId);
                     roomTimers.remove(roomId);
-                    server.getRoomOperations(roomId).sendEvent("GAME_OVER");
+                    server.getRoomOperations(roomId).sendEvent(EventName.GAME_OVER.name());
                 }
             }, 1, 1, TimeUnit.SECONDS);
-        };
-    }
-
-    private DataListener<PlayerLeaveVM> handlePlayerQuit(SocketIOServer server) {
-        return (client, data, ackSender) -> {
-
-            roomPlayerService.quitGame(data.roomId(), data.playerId());
-
-            client.leaveRoom(String.valueOf(data.roomId()));
-
-            if(server.getRoomOperations(String.valueOf(data.roomId())).getClients().isEmpty()){
-                Room room = roomRepository.findById(data.roomId()).orElseThrow();
-                room.setState(RoomState.CLOSE);
-                roomRepository.save(room);
-            }
-
-            server.getRoomOperations(String.valueOf(data.roomId())).sendEvent("PLAYER_QUIT", data);
-
-            server.getBroadcastOperations().sendEvent("PLAYER_QUIT", data);
-
-        };
-    }
-
-    private DataListener<FoodMV> handleFoodEaten(SocketIOServer server) {
-        return (client, data, ackSender) -> {
-            int foodType = data.foodType();
-            String playerId = data.playerId();
-            String roomId = data.roomId();
-            int snakeType = data.snakeType();
-
-            // get snakeType player
-            boolean isMapping = (snakeType == foodType);
-
-            int amountScore = isMapping ? 10 : -10;
-            int score = playerScores.getOrDefault(playerId, 0) + amountScore;
-            if (score <= 0) {
-                score = 0;
-            }
-            playerScores.put(playerId, score);
-            // create food
-            FoodEatenMV foodEatenMV = new FoodEatenMV(playerId, foodType, isMapping, score);
-            server.getBroadcastOperations().sendEvent("FOOD_EATEN", foodEatenMV);
-
-            // Reset old pos
-            FoodMV oldFood = activeFoods.get(foodType);
-            if (oldFood != null) {
-                Vector2 oldPos = new Vector2(oldFood.x(), oldFood.y());
-                Set<Vector2> usedList = usedSpawnPositions.getOrDefault(roomId, new HashSet<>());
-                usedList.remove(oldPos);
-                usedSpawnPositions.put(roomId, usedList);
-            }
-
-            // remove food
-            activeFoods.remove(foodType);
-            server.getBroadcastOperations().sendEvent("FOOD_REMOVED", foodType);
-            spawnedFoods.put(foodType, false);
-            // Respawn after 0.5s
-            ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-            scheduler.schedule(() -> {
-                if (!spawnedFoods.getOrDefault(foodType, false)) {
-                    Random rand = new Random();
-
-                    List<Vector2> spawnList = roomSpawnPositions.get(roomId);
-                    Vector2 chosenPos = spawnList.get(rand.nextInt(spawnList.size()));
-
-                    Set<Vector2> usedList = usedSpawnPositions.getOrDefault(roomId, new HashSet<>());
-
-                    Vector2 selected = null;
-                    List<Vector2> available = spawnList.stream()
-                            .filter(pos -> !usedList.contains(pos))
-                            .collect(Collectors.toList());
-
-                    if (!available.isEmpty()) {
-                        selected = available.get(new Random().nextInt(available.size()));
-                        usedList.add(selected);
-                        usedSpawnPositions.put(roomId, usedList);
-
-                        float x = selected.x;
-                        float y = selected.y;
-
-                        FoodMV newFood = new FoodMV(playerId, roomId, foodType, snakeType, x, y);
-                        server.getRoomOperations(roomId).sendEvent("SPAWN_FOOD", newFood);
-                        spawnedFoods.put(foodType, true);
-                        activeFoods.put(foodType, newFood);
-                    }
-                }
-            }, 1500, TimeUnit.MILLISECONDS);
-        };
-    }
-
-    private DataListener<SnakeVM> handleMove(SocketIOServer server) {
-        return (client, data, ackSender) -> {
-            for (PlayerSession playerSession : playerSessionStore.getAll().values()) {
-                if (playerSession.getPlayerId().equals(data.id().toString())) {
-                    GameState gameState = playerSession.getGameState();
-                    gameState.setX(data.x());
-                    gameState.setY(data.y());
-                    playerSession.updateGameState(gameState);
-                    break;
-                }
-            }
-
-            // send pos to other clients
-            server.getRoomOperations(data.roomId()).sendEvent(EventName.SNAKE_MOVED.name(), data);
         };
     }
 
     private DataListener<JoinGameVM> handleJoinGame(SocketIOServer server) {
         return (client, data, ackSender) -> {
             String playerId = data.playerId();
+            String roomId = data.roomId();
             float x = 0;
             float y = 0;
+            float rot = 0;
+            int score = 0;
             SnakeJoinedVM joined = new SnakeJoinedVM(
                     playerId,
                     x,
                     y,
-                    0,
-                    0,
+                    rot,
+                    score,
                     data.type());
 
+            alivePlayers.computeIfAbsent(roomId, k -> ConcurrentHashMap.newKeySet()).add(playerId);
+
             // send own client to spawn
-            client.sendEvent("PLAYER_CREATED", joined);
+            client.sendEvent(EventName.PLAYER_CREATED.name(), joined);
 
             // send cur food list to other client
             for (FoodMV food : activeFoods.values()) {
-                client.sendEvent("SPAWN_FOOD", food);
+                client.sendEvent(EventName.SPAWN_FOOD.name(), food);
             }
 
             GameState gameState = new GameState();
@@ -276,47 +138,8 @@ public class SnakeSocketHandler {
             playerSessionStore.add(playerId, playerSession);
 
             // emit others client has new client
-            server.getRoomOperations(String.valueOf(data.roomId())).sendEvent("NEW_PLAYER_JOINED", joined);
-
-            // spawn food
-            // First player -> spawn 3 type food
-            if (activeFoods.isEmpty()) {
-                spawnInitialFoods(server, playerId, data.roomId());
-            }
+            server.getRoomOperations(String.valueOf(roomId)).sendEvent(EventName.NEW_PLAYER_JOINED.name(), joined);
         };
-    }
-
-    private void spawnInitialFoods(SocketIOServer server, String playerId, String roomId) {
-        activeFoods.clear();
-        spawnedFoods.clear();
-
-        for (int type = 0; type < 4; type++) {
-            Random rand = new Random();
-
-            List<Vector2> spawnList = roomSpawnPositions.get(roomId);
-            Vector2 chosenPos = spawnList.get(rand.nextInt(spawnList.size()));
-
-            Set<Vector2> usedList = usedSpawnPositions.getOrDefault(roomId, new HashSet<>());
-
-            Vector2 selected = null;
-            List<Vector2> available = spawnList.stream()
-                    .filter(pos -> !usedList.contains(pos))
-                    .collect(Collectors.toList());
-
-            if (!available.isEmpty()) {
-                selected = available.get(new Random().nextInt(available.size()));
-                usedList.add(selected);
-                usedSpawnPositions.put(roomId, usedList);
-
-                float x = selected.x;
-                float y = selected.y;
-
-                FoodMV newFood = new FoodMV(playerId, roomId, type, 0, x, y);
-                server.getRoomOperations(roomId).sendEvent("SPAWN_FOOD", newFood);
-                spawnedFoods.put(type, true);
-                activeFoods.put(type, newFood);
-            }
-        }
     }
 
     private DataListener<RoomAndPlayerVM> handleRejoinGame(SocketIOServer server) {
@@ -340,6 +163,222 @@ public class SnakeSocketHandler {
         };
     }
 
+    private DataListener<PlayerLeaveVM> handleSnakeDie(SocketIOServer server) {
+        return (client, data, ackSender) -> {
+            String roomId = String.valueOf(data.roomId());
+            String playerId = String.valueOf(data.playerId());
+            playerScores.put(playerId, 0);
+
+            server.getRoomOperations(roomId).sendEvent(EventName.SNAKE_DIED.name(), data);
+
+            Set<String> aliveSet = alivePlayers.get(roomId);
+            if (aliveSet != null) {
+                aliveSet.remove(playerId);
+
+                if (aliveSet.size() <= 1) {
+                    ScheduledExecutorService scheduler = gameTimers.get(roomId);
+                    if (scheduler != null && !scheduler.isShutdown()) {
+                        scheduler.shutdown();
+                    }
+                    gameTimers.remove(roomId);
+                    roomTimers.remove(roomId);
+                    alivePlayers.remove(roomId);
+
+                    String winnerId = aliveSet.stream().findFirst().orElse(null);
+
+                    server.getRoomOperations(roomId).sendEvent("GAME_OVER", winnerId);
+                }
+            }
+        };
+    }
+
+    private DataListener<SpawnPositionsVM> handleSpawnPosition(SocketIOServer server) {
+        return (client, data, ackSender) -> {
+            String roomId = data.roomId();
+            ArrayNode positions = data.spawnPositions();
+
+            List<Vector2> posList = new ArrayList<>();
+            for (JsonNode pos : positions) {
+                float x = (float) pos.get("x").asDouble();
+                float y = (float) pos.get("y").asDouble();
+                posList.add(new Vector2(x, y));
+            }
+            roomSpawnPositions.put(roomId, posList);
+        };
+    }
+
+    private DataListener<PowerUpCollectedVM> handlePowerUpCollected(SocketIOServer server) {
+        return (client, data, ackSender) -> {
+            String playerId = data.playerId();
+            String roomId = data.roomId();
+            int powerUpType = data.powerUpType();
+            int duration = data.duration();
+
+            // Reset old pos
+            Vector2 oldPos = activePowerUpPositions.get(roomId);
+            if (oldPos != null) {
+                Set<Vector2> usedList = usedSpawnPositions.getOrDefault(roomId, new HashSet<>());
+                usedList.remove(oldPos);
+                usedSpawnPositions.put(roomId, usedList);
+                activePowerUpPositions.remove(roomId);
+            }
+
+            // remove
+            server.getRoomOperations(roomId).sendEvent(EventName.POWER_UP_REMOVED.name(), powerUpType);
+            spawnPowerUp(server, roomId);
+
+            PowerUpType type;
+            try {
+                type = PowerUpType.fromCode(powerUpType);
+            } catch (IllegalArgumentException e) {
+                System.err.println("Invalid PowerUpType from client");
+                return;
+            }
+
+            PowerUpType effectToApply = type;
+            if (type == PowerUpType.MYSTERY) {
+                effectToApply = PowerUpType.getRandomBasicEffect();
+            }
+
+            PowerUpEffectMV effectData = new PowerUpEffectMV(playerId, effectToApply.getCode(), duration);
+            server.getRoomOperations(roomId).sendEvent(EventName.APPLY_EFFECT.name(), effectData);
+        };
+    }
+
+    private DataListener<PlayerLeaveVM> handlePlayerQuit(SocketIOServer server) {
+        return (client, data, ackSender) -> {
+
+            roomPlayerService.quitGame(data.roomId(), data.playerId());
+
+            client.leaveRoom(String.valueOf(data.roomId()));
+
+            if(server.getRoomOperations(String.valueOf(data.roomId())).getClients().isEmpty()){
+                Room room = roomRepository.findById(data.roomId()).orElseThrow();
+                room.setState(RoomState.CLOSE);
+                roomRepository.save(room);
+            }
+            server.getRoomOperations(String.valueOf(data.roomId())).sendEvent(EventName.PLAYER_QUIT.name(), data);
+        };
+    }
+
+    private DataListener<FoodMV> handleFoodEaten(SocketIOServer server) {
+        return (client, data, ackSender) -> {
+            int foodType = data.foodType();
+            String playerId = data.playerId();
+            String roomId = data.roomId();
+            int snakeType = data.snakeType();
+
+            // get snakeType player
+            boolean isMapping = (snakeType == foodType);
+
+            int amountScore = isMapping ? AMOUNT_SCORE : -AMOUNT_SCORE;
+            int score = playerScores.getOrDefault(playerId, 0) + amountScore;
+            if (score <= 0) {
+                score = 0;
+            }
+            playerScores.put(playerId, score);
+            // create food
+            FoodEatenMV foodEatenMV = new FoodEatenMV(playerId, foodType, isMapping, score);
+            server.getRoomOperations(roomId).sendEvent(EventName.FOOD_EATEN.name(), foodEatenMV);
+
+            // Reset old pos
+            FoodMV oldFood = activeFoods.get(foodType);
+            if (oldFood != null) {
+                Vector2 oldPos = new Vector2(oldFood.x(), oldFood.y());
+                Set<Vector2> usedList = usedSpawnPositions.getOrDefault(roomId, new HashSet<>());
+                usedList.remove(oldPos);
+                usedSpawnPositions.put(roomId, usedList);
+            }
+
+            // remove food
+            activeFoods.remove(foodType);
+            server.getRoomOperations(roomId).sendEvent(EventName.FOOD_REMOVED.name(), foodType);
+            spawnedFoods.put(foodType, false);
+            // Respawn
+            ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+            scheduler.schedule(() -> {
+                if (!spawnedFoods.getOrDefault(foodType, false)) {
+                    List<Vector2> spawnList = roomSpawnPositions.get(roomId);
+                    Set<Vector2> usedList = usedSpawnPositions.getOrDefault(roomId, new HashSet<>());
+                    Vector2 selected = null;
+                    List<Vector2> available = spawnList.stream()
+                            .filter(pos -> !usedList.contains(pos))
+                            .collect(Collectors.toList());
+
+                    if (!available.isEmpty()) {
+                        selected = available.get(new Random().nextInt(available.size()));
+                        usedList.add(selected);
+                        usedSpawnPositions.put(roomId, usedList);
+
+                        float x = selected.x;
+                        float y = selected.y;
+
+                        FoodMV newFood = new FoodMV(playerId, roomId, foodType, snakeType, x, y);
+                        server.getRoomOperations(roomId).sendEvent(EventName.SPAWN_FOOD.name(), newFood);
+                        spawnedFoods.put(foodType, true);
+                        activeFoods.put(foodType, newFood);
+                    }
+                }
+            }, SPAWN_FOOD_DURATION, TimeUnit.MILLISECONDS);
+        };
+    }
+
+    private DataListener<SnakeVM> handleMove(SocketIOServer server) {
+        return (client, data, ackSender) -> {
+            for (PlayerSession playerSession : playerSessionStore.getAll().values()) {
+                if (playerSession.getPlayerId().equals(data.id().toString())) {
+                    GameState gameState = playerSession.getGameState();
+                    gameState.setX(data.x());
+                    gameState.setY(data.y());
+                    playerSession.updateGameState(gameState);
+                    break;
+                }
+            }
+
+            // send pos to other clients
+            server.getRoomOperations(data.roomId()).sendEvent(EventName.SNAKE_MOVED.name(), data);
+        };
+    }
+
+    private DataListener<GameOverMV> handleSaveScore(SocketIOServer server) {
+        return (socketIOClient, data, ackSender) -> {
+            int score = playerScores.getOrDefault(data.playerId().toString(), 0);
+            roomPlayerService.update(data, score);
+            playerSessionStore.remove(data.playerId().toString());
+            socketIOClient.leaveRoom(data.roomId().toString());
+        };
+    }
+
+    private void spawnInitialFoods(SocketIOServer server, String playerId, String roomId) {
+        activeFoods.clear();
+        spawnedFoods.clear();
+
+        for (int type = 0; type < 4; type++) {
+            List<Vector2> spawnList = roomSpawnPositions.get(roomId);
+
+            Set<Vector2> usedList = usedSpawnPositions.getOrDefault(roomId, new HashSet<>());
+
+            Vector2 selected = null;
+            List<Vector2> available = spawnList.stream()
+                    .filter(pos -> !usedList.contains(pos))
+                    .collect(Collectors.toList());
+
+            if (!available.isEmpty()) {
+                selected = available.get(new Random().nextInt(available.size()));
+                usedList.add(selected);
+                usedSpawnPositions.put(roomId, usedList);
+
+                float x = selected.x;
+                float y = selected.y;
+
+                FoodMV newFood = new FoodMV(playerId, roomId, type, 0, x, y);
+                server.getRoomOperations(roomId).sendEvent(EventName.SPAWN_FOOD.name(), newFood);
+                spawnedFoods.put(type, true);
+                activeFoods.put(type, newFood);
+            }
+        }
+    }
+
     private void spawnPowerUp(SocketIOServer server, String roomId) {
         int delay = ThreadLocalRandom.current().nextInt(3000, 7000);
         ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
@@ -360,22 +399,8 @@ public class SnakeSocketHandler {
                 float y = selected.y;
                 int powerUpType = PowerUpType.MYSTERY.getCode();
                 PowerUpMV spawnData = new PowerUpMV(powerUpType, x, y);
-                server.getRoomOperations(roomId).sendEvent("SPAWN_POWER_UP", spawnData);
+                server.getRoomOperations(roomId).sendEvent(EventName.SPAWN_POWER_UP.name(), spawnData);
             }
-
         }, delay, TimeUnit.MILLISECONDS);
-    }
-
-    private void resetScore(String playerId) {
-        playerScores.put(playerId, 0);
-    }
-
-    private DataListener<GameOverMV> handleSaveScore(SocketIOServer server) {
-        return (socketIOClient, data, ackSender) -> {
-            int score = playerScores.getOrDefault(data.playerId().toString(), 0);
-            roomPlayerService.update(data, score);
-            playerSessionStore.remove(data.playerId().toString());
-            socketIOClient.leaveRoom(data.roomId().toString());
-        };
     }
 }
