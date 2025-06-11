@@ -1,4 +1,10 @@
 export enum EventName {
+  CONNECT = "connect",
+  DISCONECT = "disconnect",
+
+  PING_CHECK = "PING_CHECK",
+  PONG_CHECK = "PONG_CHECK",
+
   SELECTED_ROOM = "SELECTED_ROOM",
   CREATE_ROOM = "CREATE_ROOM",
   DISSOLVE_ROOM = "DISSOLVE_ROOM",
@@ -24,7 +30,6 @@ export enum EventName {
   MOVE = "MOVE",
   SNAKE_MOVED = "SNAKE_MOVED",
 
-
   DISCONNECT_NETWORK = "network:disconnected",
   RECONNECT_NETWORK = "network:reconnect",
 
@@ -39,6 +44,8 @@ export enum EventName {
 
   SPAWN_POWER_UP = "SPAWN_POWER_UP",
   POWER_UP_REMOVED = "POWER_UP_REMOVED",
+
+  POWER_UP_COLLECTED = "POWER_UP_COLLECTED",
 
   FOOD_REMOVED = "FOOD_REMOVED",
   SPAWN_FOOD = "SPAWN_FOOD"

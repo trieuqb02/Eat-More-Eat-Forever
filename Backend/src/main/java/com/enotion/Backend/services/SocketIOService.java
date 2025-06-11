@@ -3,12 +3,17 @@ package com.enotion.Backend.services;
 import com.corundumstudio.socketio.SocketIOClient;
 import com.corundumstudio.socketio.SocketIOServer;
 import com.corundumstudio.socketio.listener.ConnectListener;
+import com.corundumstudio.socketio.listener.DataListener;
 import com.corundumstudio.socketio.listener.DisconnectListener;
 import com.enotion.Backend.config.PlayerSessionStore;
 import com.enotion.Backend.entities.Room;
 import com.enotion.Backend.entities.RoomPlayer;
+import com.enotion.Backend.enums.EventName;
+import com.enotion.Backend.enums.ResponseState;
 import com.enotion.Backend.enums.RoomState;
 import com.enotion.Backend.payload.PlayerSession;
+import com.enotion.Backend.payload.RoomAndPlayerMV;
+import com.enotion.Backend.payload.RoomVM;
 import com.enotion.Backend.repositories.RoomPlayerRepository;
 import com.enotion.Backend.repositories.RoomRepository;
 import com.enotion.Backend.utils.GameStateUtils;
@@ -48,6 +53,7 @@ public class SocketIOService {
     public void startSocketServer() {
         server.addConnectListener(onConnected());
         server.addDisconnectListener(onDisconnected());
+        server.addEventListener(EventName.PING_CHECK.name(), String.class,onPingCheck());
         server.start();
     }
 
@@ -84,6 +90,12 @@ public class SocketIOService {
                 }
             }
 
+        };
+    }
+
+    private DataListener<String> onPingCheck() {
+        return (socketIOClient, data, ackSender) -> {
+            socketIOClient.sendEvent(EventName.PONG_CHECK.name());
         };
     }
 

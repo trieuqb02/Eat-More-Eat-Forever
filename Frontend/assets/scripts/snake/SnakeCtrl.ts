@@ -101,7 +101,7 @@ export class SnakeCtrl extends Component implements IAcceleratable, ISlowable {
         // eat food
         const food = otherCollider.getComponent(Food);
         if (food) {
-            GameManger.Instance.socketManager.emit("FOOD_EATEN", {
+            GameManger.Instance.socketManager.emit(EventName.FOOD_EATEN, {
                 playerId: GameManger.Instance.playerId,
                 snakeType: this.snakeType,
                 foodType: food.foodType 
@@ -117,7 +117,7 @@ export class SnakeCtrl extends Component implements IAcceleratable, ISlowable {
                 }, 0)
 
                 // emit server
-                GameManger.Instance.socketManager.emit("SNAKE_DIED", {
+                GameManger.Instance.socketManager.emit(EventName.SNAKE_DIED, {
                     playerId: this.playerId,
                     killedBy: tail.playerId
                 });
@@ -127,7 +127,7 @@ export class SnakeCtrl extends Component implements IAcceleratable, ISlowable {
         // check collect power ups
         const powerUp = otherCollider.getComponent(PowerUp);
         if (powerUp) {
-            GameManger.Instance.socketManager.emit("POWER_UP_COLLECTED", {
+            GameManger.Instance.socketManager.emit(EventName.POWER_UP_COLLECTED, {
                 playerId: GameManger.Instance.playerId,
                 roomId: GameManger.Instance.roomId,
                 powerUpType: powerUp.powerUpType,

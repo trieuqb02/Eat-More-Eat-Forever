@@ -10,6 +10,8 @@ export class SocketManager {
 
   private socket: Socket | null = null;
 
+  private urlSocket: string = "http://localhost:3000";
+
   public static getInstance(): SocketManager {
     if (!this._instance) {
       this._instance = new SocketManager();
@@ -20,14 +22,15 @@ export class SocketManager {
   public initSocket() {
     if (this.socket) return;
 
-    this.socket = (window as any).io("http://localhost:3000", {
+    this.socket = (window as any).io(this.urlSocket, {
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
     });
 
     let hasConnectedBefore = false;
-    this.socket.on("connect", () => {
+    this.socket.on(EventName.CONNECT, () => {
+      
       if (hasConnectedBefore) {
         console.log("Reconnected", this.socket.id);
         GlobalEventBus.emit(EventName.RECONNECT_NETWORK);
@@ -47,7 +50,7 @@ export class SocketManager {
       }
     });
 
-    this.socket.on("disconnect", (reason) => {
+    this.socket.on(EventName.DISCONECT, (reason) => {
       console.log("Lost connection:", reason);
 
       GlobalEventBus.emit(EventName.DISCONNECT_NETWORK);
@@ -55,16 +58,14 @@ export class SocketManager {
 
     this.socket.on(EventName.TIMEOUT_CONNECTION, () => {
       const data = DataManager.getInstance().getRoomAndPlayer();
-      this.socket.emit("PLAYER_QUIT", {
+      this.socket.emit(EventName.PLAYER_QUIT, {
           playerId: data.player.id,
           roomId: data.room.id
       });
       director.loadScene(SceneName.WAITING_ROOM)
   });
   }
-
   
-
   public disconnect() {
     if (this.socket) {
       this.socket.removeAllListeners();

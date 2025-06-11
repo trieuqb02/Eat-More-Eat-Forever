@@ -1,4 +1,4 @@
-import { _decorator, Component, director, instantiate, Node, Prefab, Scene, Vec3 } from 'cc';
+import { _decorator, Color, Component, director, instantiate, Label, Node, Prefab, Quat, Scene, Vec3 } from 'cc';
 import { UIManager } from './UIManager';
 import { SocketManager } from './socket/SocketManager';
 import { EventName } from './utils/EventName';
@@ -13,8 +13,7 @@ const { ccclass, property } = _decorator;
 
 @ccclass('GameManger')
 export class GameManger extends Component {
-    public static Instance: GameManger = null; // singleton
-
+    public static Instance: GameManger = null;
     socketManager = SocketManager.getInstance();
     playerId: String;
     roomId: String;
@@ -23,15 +22,20 @@ export class GameManger extends Component {
     @property({ type: [Prefab] })
     snakePrefabs: Prefab[] = [];
 
+    @property(Label)
+    private pingLabel: Label = null;
+
     private snakeCtrl: SnakeCtrl = null;
     public otherPlayers: Record<string, Node> = {};
     private dataManager: DataManager = DataManager.getInstance();
+
+    private pingStart = 0;
 
     protected onLoad(): void {
         GlobalEventBus.on(EventName.DISCONNECT_NETWORK, this.onConnectionLost, this);
         GlobalEventBus.on(EventName.RECONNECT_NETWORK, this.onReconnection, this);
 
-        if (GameManger.Instance === null) GameManger.Instance = this; // singleton
+        if (GameManger.Instance === null) GameManger.Instance = this;
 
         const roomAndPlayer = this.dataManager.getRoomAndPlayer();
 
@@ -55,19 +59,34 @@ export class GameManger extends Component {
 
         this.socketManager.on(EventName.APPLY_EFFECT, this.APPLY_EFFECT);
 
-        // when Player quit game
+        this.socketManager.on(EventName.PLAYER_QUIT, this.PLAYER_QUIT);
+
+        this.schedule(this.sendPing, 2);
+
+        this.socketManager.on(EventName.PONG_CHECK, this.PONG_CHECK);
+        
         window.addEventListener("beforeunload", () => {
-            this.socketManager.emit("PLAYER_QUIT", {
+            this.socketManager.emit(EventName.PLAYER_QUIT, {
                 playerId: this.playerId,
                 roomId: this.roomId
             });
         });
-
-        this.socketManager.on(EventName.PLAYER_QUIT, this.PLAYER_QUIT);
     }
 
     protected start() {
         this.socketManager.emit("JOIN_GAME", { playerId: this.playerId, roomId: this.roomId, type: this.type});
+    }
+
+    onPongCheck(){
+        const ping = Date.now() - this.pingStart;
+        this.pingLabel.string = `Ping: ${ping} ms`;
+        if (ping < 10) {
+            this.pingLabel.color = new Color(0, 255, 0);   
+        } else if (ping < 100) {
+            this.pingLabel.color = new Color(255, 255, 0);   
+        } else if (ping >= 200) {
+            this.pingLabel.color = new Color(255, 0, 0);     
+        }
     }
 
     applyEffectToSnake(snakeCtrl: SnakeCtrl, effectType: number, duration: number) {
@@ -147,6 +166,14 @@ export class GameManger extends Component {
         });
     }
 
+   quitGame(){
+        this.socketManager.emit(EventName.PLAYER_QUIT, {
+            playerId: this.playerId,
+            roomId: this.roomId
+        });
+    director.loadScene(SceneName.WAITING_ROOM);
+    }
+
     private PLAYER_CREATED = this.onPlayerCreated.bind(this);
     private NEW_PLAYER_JOINED = this.onNewPlayerJoined.bind(this);
     private SNAKE_MOVED = this.onSnakeMove.bind(this);
@@ -156,6 +183,8 @@ export class GameManger extends Component {
     private GAME_OVER = this.onGameOver.bind(this);
     private APPLY_EFFECT = this.onApplyEffect.bind(this);
     private PLAYER_QUIT = this.onPlayerQuit.bind(this);
+
+    private PONG_CHECK = this.onPongCheck.bind(this);
 
     onPlayerCreated(data){
         const { playerId, x, y, rot, snakeType } = data;
@@ -171,7 +200,7 @@ export class GameManger extends Component {
     }
 
     onSnakeMove(data){
-        const { id, x, y, rot } = data;
+        const { id, x, y, rot, roomId } = data;
             if (id === this.playerId) return;
 
             const player = this.otherPlayers[id];
@@ -183,6 +212,7 @@ export class GameManger extends Component {
                 const snakeCtrl = player.getComponent(SnakeCtrl);
                 if (snakeCtrl) {
                     snakeCtrl.saveHistory(player.position.clone(), player.rotation.clone());
+
                 }
             }
     }
@@ -264,12 +294,18 @@ export class GameManger extends Component {
             if (playerNode) {
                 const snakeCtrl = playerNode.getComponent(SnakeCtrl);
                 if (snakeCtrl) snakeCtrl.destroySnake(); 
-                else playerNode.destroy(); // ensure destroy
+                else playerNode.destroy(); 
                 delete this.otherPlayers[playerId];
             }
     }
 
+    sendPing() {
+        this.pingStart = Date.now();
+        this.socketManager.emit(EventName.PING_CHECK, null);
+    }
+
     onDestroy() {
+        this.socketManager.off(EventName.PONG_CHECK, this.PONG_CHECK);
         this.socketManager.off(EventName.PLAYER_CREATED, this.PLAYER_CREATED);
         this.socketManager.off(EventName.NEW_PLAYER_JOINED, this.NEW_PLAYER_JOINED);
         this.socketManager.off(EventName.SNAKE_MOVED, this.SNAKE_MOVED);
