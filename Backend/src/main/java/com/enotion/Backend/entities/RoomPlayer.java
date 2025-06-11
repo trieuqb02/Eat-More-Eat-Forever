@@ -17,6 +17,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @DynamicUpdate
 @DynamicInsert
+@ToString
 public class RoomPlayer extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

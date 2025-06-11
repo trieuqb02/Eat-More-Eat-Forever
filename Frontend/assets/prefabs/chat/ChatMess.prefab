@@ -127,7 +127,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 380,
+      "width": 350,
       "height": 30.240000000000002
     },
     "_anchorPoint": {
@@ -166,14 +166,17 @@
     "_string": "asda",
     "_horizontalAlign": 0,
     "_verticalAlign": 1,
-    "_actualFontSize": 20.65625,
+    "_actualFontSize": 20,
     "_fontSize": 20,
     "_fontFamily": "Arial",
     "_lineHeight": 24,
     "_overflow": 3,
     "_enableWrapText": true,
-    "_font": null,
-    "_isSystemFontUsed": true,
+    "_font": {
+      "__uuid__": "8261f7fa-9ed5-4b27-907e-980347c81974",
+      "__expectedType__": "cc.TTFFont"
+    },
+    "_isSystemFontUsed": false,
     "_spacingX": 0,
     "_isItalic": false,
     "_isBold": false,
@@ -236,7 +239,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 380,
+      "width": 350,
       "height": 30.240000000000002
     },
     "_anchorPoint": {
@@ -297,6 +300,7 @@
       "__id__": 0
     },
     "fileId": "6fM8iwt+5FxqTsiEv+y4KU",
+    "instance": null,
     "targetOverrides": null
   }
 ]

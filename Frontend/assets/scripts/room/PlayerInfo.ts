@@ -21,6 +21,12 @@ export class PlayerInfo extends Component implements IBaseComponent{
     start() {
         this.node.getChildByPath("Name")!.getComponent(Label).string = this.namePlayer;
         this.node.getChildByPath("Ready").active = this.isReady;
+        
+        let role = "Host";
+        if(!this.isHost){
+            role = "Player";
+        } 
+        this.node.getChildByName("Role").getComponent(Label).string = role;
     }
 
     changeReady(isReady: boolean){
