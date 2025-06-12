@@ -8,6 +8,9 @@ const { ccclass, property } = _decorator;
 export class UIManager extends Component {
     public static Instance: UIManager = null; // singleton
 
+    @property(Node)
+    private canvas : Node = null;
+
     @property(Label)
     scoreLabel: Label;
     @property(Prefab)
@@ -67,9 +70,8 @@ export class UIManager extends Component {
             }
         }
 
-        const roomAndPlayer = this.dataManager.getRoomAndPlayer();
         const label = this.playerLabels.get(playerId);
-        label.string = `${roomAndPlayer.player.name}: ${score}`;
+        label.string = `${playerId.substring(0, 3)}: ${score}`;
 
         // sort
         const sortedPlayers = Array.from(this.playerScores.entries())
@@ -129,8 +131,7 @@ export class UIManager extends Component {
             const scoreLabel = item.getChildByName("Score")?.getComponent(Label);
 
             // name
-            const roomAndPlayer = this.dataManager.getRoomAndPlayer();
-            const nameStr = (id === myId) ? `${roomAndPlayer.player.name} (YOU)` : roomAndPlayer.player.name;
+            const nameStr = (id === myId) ? `${id.substring(0, 5)} (YOU)` : id.substring(0, 5);
             nameLabel.string = nameStr;
             scoreLabel.string = `${score}`;
 
@@ -142,7 +143,7 @@ export class UIManager extends Component {
 
     async screenShot(): Promise<string>{
         const captureComp = this.captureNode.getComponent(UICapture);
-        const renderTexture = await captureComp.captureUINode(this.gameOverPanel);
+        const renderTexture = await captureComp.captureUINode(this.canvas);
         const base64Image = await captureComp.renderTextureToCompressedBase64(renderTexture);
         return base64Image;
     }

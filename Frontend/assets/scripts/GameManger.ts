@@ -276,19 +276,19 @@ export class GameManger extends Component {
     onApplyEffect(data){
         const { playerId, effectType, duration } = data;
 
-            // own
-            if (playerId === this.playerId && this.snakeCtrl) {
-                this.applyEffectToSnake(this.snakeCtrl, effectType, duration);
-            }
+        // own
+        if (playerId === this.playerId && this.snakeCtrl) {
+            this.applyEffectToSnake(this.snakeCtrl, effectType, duration);
+        }
 
-            // others
-            const otherSnake = this.otherPlayers[playerId];
-            if (otherSnake) {
-                const snakeCtrl = otherSnake.getComponent(SnakeCtrl);
-                if (snakeCtrl) {
-                    this.applyEffectToSnake(snakeCtrl, effectType, duration);
-                }
+        // others
+        const otherSnake = this.otherPlayers[playerId];
+        if (otherSnake) {
+            const snakeCtrl = otherSnake.getComponent(SnakeCtrl);
+            if (snakeCtrl) {
+                this.applyEffectToSnake(snakeCtrl, effectType, duration);
             }
+        }
     }
 
     onPlayerQuit(data){
