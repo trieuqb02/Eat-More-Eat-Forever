@@ -45,9 +45,11 @@ export class GameManger extends Component {
     private PLAYER_QUIT = this.onPlayerQuit.bind(this);
     private PONG_CHECK = this.onPongCheck.bind(this);
 
+
     protected onLoad(): void {
         GlobalEventBus.on(EventName.DISCONNECT_NETWORK, this.onConnectionLost, this);
         GlobalEventBus.on(EventName.RECONNECT_NETWORK, this.onReconnection, this);
+        GlobalEventBus.on(EventName.BACK_SCENE_MENU, this.onBackSceneMenu, this);
 
         if (GameManger.Instance === null) GameManger.Instance = this;
 
@@ -171,6 +173,12 @@ export class GameManger extends Component {
     onReconnection(){
         this.snakeCtrl.enabled = true;
         UIManager.Instance.showDisconnectPanel();
+    }
+
+    onBackSceneMenu(){
+        director.preloadScene(SceneName.MENU, () => {
+            director.loadScene(SceneName.MENU);
+        });
     }
 
     clickBackMenu(){
@@ -318,7 +326,8 @@ export class GameManger extends Component {
         this.socketManager.off(EventName.GAME_OVER, this.GAME_OVER);
         this.socketManager.off(EventName.APPLY_EFFECT, this.APPLY_EFFECT);
         this.socketManager.off(EventName.PLAYER_QUIT, this.PLAYER_QUIT);
-
+        
+        GlobalEventBus.off(EventName.DISCONNECT_NETWORK, this.onBackSceneMenu, this);
         GlobalEventBus.off(EventName.DISCONNECT_NETWORK, this.onConnectionLost, this);
         GlobalEventBus.off(EventName.RECONNECT_NETWORK, this.onReconnection, this);
         if (GameManger.Instance === this) 

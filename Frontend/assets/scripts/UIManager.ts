@@ -8,9 +8,6 @@ const { ccclass, property } = _decorator;
 export class UIManager extends Component {
     public static Instance: UIManager = null; // singleton
 
-    @property(Node)
-    private canvas : Node = null;
-
     @property(Label)
     scoreLabel: Label;
     @property(Prefab)
@@ -143,7 +140,7 @@ export class UIManager extends Component {
 
     async screenShot(): Promise<string>{
         const captureComp = this.captureNode.getComponent(UICapture);
-        const renderTexture = await captureComp.captureUINode(this.canvas);
+        const renderTexture = await captureComp.captureUINode(this.gameOverPanel);
         const base64Image = await captureComp.renderTextureToCompressedBase64(renderTexture);
         return base64Image;
     }

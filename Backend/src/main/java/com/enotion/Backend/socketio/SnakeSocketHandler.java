@@ -43,7 +43,7 @@ public class SnakeSocketHandler {
     PlayerSessionStore playerSessionStore;
     private final RoomRepository roomRepository;
 
-    int GAME_TIME = 10;
+    int GAME_TIME =  60;
     int AMOUNT_SCORE = 10;
     int SPAWN_FOOD_DURATION = 1500;
 

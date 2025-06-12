@@ -4,6 +4,7 @@ import { EventName } from "../utils/EventName";
 import GlobalEventBus from "../GlobalEventBus";
 import { SceneName } from "../utils/SceneName";
 import { director } from "cc";
+import { Direction } from "../offline/Direction";
 
 export class SocketManager {
   private static _instance: SocketManager;
@@ -11,6 +12,8 @@ export class SocketManager {
   private socket: Socket | null = null;
 
   private urlSocket: string = "http://localhost:3000";
+
+  private disconnectTimer: any = null;
 
   public static getInstance(): SocketManager {
     if (!this._instance) {
@@ -30,7 +33,11 @@ export class SocketManager {
 
     let hasConnectedBefore = false;
     this.socket.on(EventName.CONNECT, () => {
-      
+      if (this.disconnectTimer) {
+        clearTimeout(this.disconnectTimer);
+        this.disconnectTimer = null;
+      }
+
       if (hasConnectedBefore) {
         console.log("Reconnected", this.socket.id);
         GlobalEventBus.emit(EventName.RECONNECT_NETWORK);
@@ -52,6 +59,16 @@ export class SocketManager {
 
     this.socket.on(EventName.DISCONECT, (reason) => {
       console.log("Lost connection:", reason);
+
+      if (this.disconnectTimer) {
+        clearTimeout(this.disconnectTimer);
+      }
+
+      this.disconnectTimer = setTimeout(() => {
+        if (!this.socket.connected) {
+          GlobalEventBus.emit(EventName.BACK_SCENE_MENU);
+        }
+      }, 5000);
 
       GlobalEventBus.emit(EventName.DISCONNECT_NETWORK);
     });

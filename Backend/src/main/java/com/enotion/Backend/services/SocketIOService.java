@@ -11,6 +11,7 @@ import com.enotion.Backend.entities.RoomPlayer;
 import com.enotion.Backend.enums.EventName;
 import com.enotion.Backend.enums.ResponseState;
 import com.enotion.Backend.enums.RoomState;
+import com.enotion.Backend.payload.PlayerLeaveVM;
 import com.enotion.Backend.payload.PlayerSession;
 import com.enotion.Backend.payload.RoomAndPlayerMV;
 import com.enotion.Backend.payload.RoomVM;
@@ -103,7 +104,6 @@ public class SocketIOService {
         Executors.newSingleThreadScheduledExecutor().schedule(() -> {
             try {
                 PlayerSession session = playerSessionStore.get(playerId);
-                System.out.println("session " + session);
                 if (session != null && !session.isOnline()) {
 
                     RoomPlayer timedOutPlayer = roomPlayerService.getRoomPlayerByRoomIdAndPlayerId(
@@ -128,6 +128,8 @@ public class SocketIOService {
                     } else {
                         handlePlayerTimeout(playerId);
                     }
+                    PlayerLeaveVM data = new PlayerLeaveVM(timedOutPlayer.getPlayer().getId(), timedOutPlayer.getRoom().getId());
+                    server.getRoomOperations(String.valueOf(timedOutPlayer.getRoom().getId())).sendEvent(EventName.PLAYER_QUIT.name(), data);
                     playerSessionStore.remove(playerId);
                 }
             } catch (Exception e) {
