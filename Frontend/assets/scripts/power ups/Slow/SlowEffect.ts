@@ -21,14 +21,10 @@ export class SlowEffect implements IEffect {
     }
 
     onStart() {
-        console.log("Start effect");
-        //this.target.accelerateEffect.active = true;
         this.target.setSlowSpeed(true, this.speedSlowTimes)
     }
 
     onEnd() {
-        console.log("End effect");
-        //this.target.accelerateEffect.active = false;
         this.target.setSlowSpeed(false, 1/ this.speedSlowTimes);
     }
 
