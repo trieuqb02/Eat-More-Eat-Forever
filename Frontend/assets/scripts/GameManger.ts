@@ -127,7 +127,13 @@ export class GameManger extends Component {
     }
 
     spawnSnake(id, pos, snakeType) {
-        const type = this.getIndexByType(snakeType);
+        let type;
+        this.types.forEach(ele => {
+            if(ele.id == snakeType){
+                type = ele.pos
+            }
+        })
+        //const type = this.getIndexByType(snakeType);
         
         const snakeNode = instantiate(this.snakePrefabs[type]);
         snakeNode.setPosition(pos);
@@ -139,7 +145,13 @@ export class GameManger extends Component {
     }
 
     spawnOtherSnake(id, pos, snakeType) {
-        const type = this.getIndexByType(snakeType);
+        let type;
+        this.types.forEach(ele => {
+            if(ele.id == snakeType){
+                type = ele.pos
+            }
+        })
+        //const type = this.getIndexByType(snakeType);
 
         const snakeNode = instantiate(this.snakePrefabs[type]);
         snakeNode.setPosition(pos);

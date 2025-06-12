@@ -67,11 +67,6 @@ public class SnakeSocketHandler {
             String playerId = data.playerId();
 
             spawnPowerUp(server, roomId);
-            // spawn food
-            // host -> spawn all food
-            if (activeFoods.isEmpty()) {
-                spawnInitialFoods(server, playerId, roomId);
-            }
 
             // check had
             if (gameTimers.containsKey(roomId)) return;
@@ -139,6 +134,12 @@ public class SnakeSocketHandler {
 
             // emit others client has new client
             server.getRoomOperations(String.valueOf(roomId)).sendEvent(EventName.NEW_PLAYER_JOINED.name(), joined);
+
+            // spawn food
+            // host -> spawn all food
+            if (activeFoods.isEmpty()) {
+                spawnInitialFoods(server, playerId, roomId);
+            }
         };
     }
 
