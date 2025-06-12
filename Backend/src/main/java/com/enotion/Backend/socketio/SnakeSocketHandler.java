@@ -278,6 +278,16 @@ public class SnakeSocketHandler {
                 score = 0;
             }
             playerScores.put(playerId, score);
+
+            for (PlayerSession playerSession : playerSessionStore.getAll().values()) {
+                if (playerSession.getPlayerId().equals(data.playerId())) {
+                    GameState gameState = playerSession.getGameState();
+                    gameState.setScore(score);
+                    playerSession.updateGameState(gameState);
+                    break;
+                }
+            }
+
             // create food
             FoodEatenMV foodEatenMV = new FoodEatenMV(playerId, foodType, isMapping, score);
             server.getRoomOperations(roomId).sendEvent(EventName.FOOD_EATEN.name(), foodEatenMV);

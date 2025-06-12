@@ -1,6 +1,7 @@
 import { _decorator, Color, Component, instantiate, Label, Node, Prefab, tween, Vec3 } from 'cc';
 import { GameManger } from './GameManger';
 import { UICapture } from './UICapture';
+import { DataManager } from './DataManager';
 const { ccclass, property } = _decorator;
 
 @ccclass('UIManager')
@@ -28,6 +29,8 @@ export class UIManager extends Component {
 
     private playerLabels: Map<String, Label> = new Map();
     private playerScores: Map<String, number> = new Map();
+
+    private dataManager = DataManager.getInstance();
 
     @property(Label) gameOverResult: Label;
     @property(Label) gameOverYourScore: Label;
@@ -60,12 +63,13 @@ export class UIManager extends Component {
             this.playerLabels.set(playerId, label);
 
             if (playerId === GameManger.Instance.playerId) {
-                label.color = new Color(50, 255, 50); 
+                label.color = new Color(50, 255, 50); // GREEN
             }
         }
 
+        const roomAndPlayer = this.dataManager.getRoomAndPlayer();
         const label = this.playerLabels.get(playerId);
-        label.string = `${playerId.substring(0, 3)}: ${score}`;
+        label.string = `${roomAndPlayer.player.name}: ${score}`;
 
         // sort
         const sortedPlayers = Array.from(this.playerScores.entries())
@@ -125,7 +129,8 @@ export class UIManager extends Component {
             const scoreLabel = item.getChildByName("Score")?.getComponent(Label);
 
             // name
-            const nameStr = (id === myId) ? `${id.substring(0, 5)} (YOU)` : id.substring(0, 5);
+            const roomAndPlayer = this.dataManager.getRoomAndPlayer();
+            const nameStr = (id === myId) ? `${roomAndPlayer.player.name} (YOU)` : roomAndPlayer.player.name;
             nameLabel.string = nameStr;
             scoreLabel.string = `${score}`;
 
